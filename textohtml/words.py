@@ -93,11 +93,20 @@ def get_control(source, pos):
     return Word(tp, length, name, pos)
 
              
-class Words(list):# 对于进行词法分析的结果进行包装, 是语法分析中的依赖
-    def __init__(self, source):
-        list.__init__(self)
-        self.pos = 0
+class Words(object):# 对于进行词法分析的结果进行包装, 是语法分析中的依赖
+    def __init__(self, source, start = 0, end = None, words = []):
         self.source = source # 记录source, 不是source 对象
+        self.words = words
+
+        self.start = start
+        if not end: end = len(self.words) - 1
+        self.end = end
+
+        self.pos = start
+
+    def append(self, w):
+        self.words.append(w)
+        self.end += 1
 
     def getcontext(self, word): 
         # 依据word 的pos 与length 得到对应的source
@@ -111,9 +120,9 @@ class Words(list):# 对于进行词法分析的结果进行包装, 是语法分�
         return self.source[s: e]
 
     def find_end_by_name(self, name, nesting = False): # nesting是不是可以嵌套
-        cur_name = self[self.pos].name()
+        cur_name = self.words[self.pos].name()
         level = 0
-        for index, w in enumerate(self[self.pos:]):
+        for index, w in enumerate(self.words[self.pos:]):
             if w.name() == cur_name:
                 level += 1
             if w.name() == name:
@@ -122,8 +131,7 @@ class Words(list):# 对于进行词法分析的结果进行包装, 是语法分�
                     continue
 
                 pos = self.pos + index + 1
-                ws = Words(self.source)
-                ws.extend(self[self.pos: pos])
+                ws = self.slice(self.pos - self.start, pos - self.start)
                 self.pos = pos
                 return ws
         else:
@@ -132,35 +140,55 @@ class Words(list):# 对于进行词法分析的结果进行包装, 是语法分�
             raise Exception(msg)
 
     def find_same(self, name):
-        for index, w in enumerate(self[self.pos:]):
-
-
+        end = False
+        for index, w in enumerate(self.words[self.pos:]):
             if w.name() != name:
                 pos = self.pos + index 
                 break
         else:
+            end = True
             pos = self.pos + index  + 1
 
-        ws = Words(self.source)
-        ws.extend(self[self.pos: pos])
+        ws = self.slice(self.pos - self.start, pos - self.start)
         self.pos = pos
-        return ws
+        return (ws, end)
 
-    def slice(self, start, end):
-        ws = Words(self.source)
-        ws.extend(self[start: end])
-        return ws
+    def slice(self, start, end=None):
+        if end:
+            if end < 0:
+                end = self.end + end + 1
+            else:
+                end = self.start + end
+
+        start = self.start + start
+
+        return Words(self.source, words = self.words, start= start,
+                end = end)
 
     def getword(self):
-        if self.pos >= len(self):
+        if self.pos > self.end or self.pos <= self.start:
             return None
-        return self[self.pos]
+        return self.words[self.pos]
+
+    def getword_byindex(self, index):
+        if index < 0:
+            index = self.end + index + 1
+        else:
+            index = self.start + index
+        if index > self.end or index <= self.start:
+            return None
+        print self.pos, ' ', self.end, ' ', self.start, len(self.words)
+        return self.words[self.pos]
 
     def update(self):
         self.pos += 1
 
     def back(self): # 使用要注意
         self.pos -= 1
+
+    def __len__(self):
+        return self.end - self.start
+
 
 
 

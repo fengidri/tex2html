@@ -11,6 +11,7 @@ logging.basicConfig(level = logging.DEBUG)
 
 from words import split
 from nodes import node_tree
+from paragraph import SplitParagraph
 
 def open_source_to_words(f):
     f = codecs.open(f, 'r','utf8')
@@ -18,7 +19,7 @@ def open_source_to_words(f):
 
 def savehtml(o, words):
     f = codecs.open(o, 'w','utf8')
-    f.write(node_tree(words).html())
+    f.write(SplitParagraph(words, 0).html())
 
 def texstohtml(src, o):
     words = split(src)

@@ -41,13 +41,18 @@ class node_punc(object):
             self.h =  ''
 
         elif self.name == ' ':
-            ws.find_same(' ')
-            self.h =  ' '
+            _ws, e = ws.find_same(' ')
+            if e:# 忽略最后空格
+                self.h = ''
+            else:
+                self.h =  ' '
 
         elif self.name == '\n':
-            if len(ws.find_same('\n')) > 1:
+            _ws, e = ws.find_same('\n')
+            if e:# 忽略最后换行
+                self.h = ''
+            elif len(_ws) > 1:
                 self.h = "</p>\n\n<p>"
-
             else:
                 self.h = '\n'
 
@@ -70,6 +75,7 @@ class node_control(object):
         2. 控制序列后面出现的\n, space 也会被处理掉
     """
     def __init__(self, ws):
+        self.ws = ws
         self.Params = []
         self.Attrs  = []
 
@@ -134,8 +140,9 @@ class Section( node_control ):
 
         if not self.Params:
             raise LostParamsEx(self.word)
-        c = self.Params[0].html()
 
+        print self.Params
+        c = self.Params[0].html()
         h = "</p>\n<h%s>%s</h%s><p>\n" % (level, c, level)
         return h
         
@@ -144,8 +151,10 @@ class Section( node_control ):
 class Typing( node_control ):
     def init(self, ws):
         tps = ws.find_end_by_name("\stoptyping")
+        s = tps.getword_byindex(0)
+        e = tps.getword_byindex(-1)
 
-        self.context = ws.get_context_between(tps[0], tps[-1])
+        self.context = ws.get_context_between(s, e)
 
     def html( self ):
         tp = self.context
@@ -160,11 +169,14 @@ class Itemize( node_control ):
         _ws = ws.find_end_by_name("\stopitemize", nesting=True)
         self.tree = node_tree(_ws.slice(1, -1))
 
-    def html(  self ):
+    def html(self ):
         return "\n<ul>\n%s\n</ul>\n" % self.tree.html()
 
 
 class Item( node_control ):
+    def init(self, ws):
+        pass
+
     def html( self ):
         #if self.param:
         #    return '\n<li><b>%s</b>&nbsp;&nbsp;&nbsp;&nbsp;' % self.param[0].html()
@@ -227,12 +239,12 @@ class DefHandle(node_control):
     MAPS = {}
     def init(self, ws):
         ws.update()
-    def html(self):
         name = self.word.name()
-        de = self.MAPS.get(name)
-        if not de:
+        self.de = self.MAPS.get(name)
+        if not self.de:
             raise Exception("Dont kwow: %s" % name)
-        return de.Params[0].html()
+    def html(self):
+        return self.de.Params[0].html()
 
 class Def(node_control):
     def init(self, ws):
@@ -279,6 +291,16 @@ NODE_MAP={
 
 class node_tree(list):
     def __init__(self, ws):
+        # 跳过开头的空白
+        print ws
+        while True:
+            w = ws.getword()
+            if not w:
+                return
+            if not w.name() in ['\n', ' ']:
+                break
+            ws.update()
+
         while True:
             w = ws.getword()
             if not w:
@@ -300,9 +322,9 @@ class node_tree(list):
                 self.append(callback(ws))
 
     def html(self):
-
         h = [n.html() for n in self]
         return ''.join(h)
+
 
 
 if __name__ == "__main__":
