@@ -111,7 +111,7 @@ class node_control(object):
                     break
 
             if name == s:
-                ps = ws.find_end_by_name(e)
+                ps = ws.find_end_by_name(e, nesting=True)
                 p = node_tree(ps.slice(1, -1))
                 cb.append(p)
                 cr_num = 0# 一个参数后, 可以再吃一个空格
@@ -154,7 +154,7 @@ class Typing( node_control ):
 
 class Itemize( node_control ):
     def init(self, ws):
-        _ws = ws.find_end_by_name("\stopitemize")
+        _ws = ws.find_end_by_name("\stopitemize", nesting=True)
         self.tree = node_tree(_ws.slice(1, -1))
 
     def html(  self ):

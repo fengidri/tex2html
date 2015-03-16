@@ -109,14 +109,14 @@ class Words(list):# 对于进行词法分析的结果进行包装, 是语法分�
         e = w2.pos[2] 
         return self.source[s: e]
 
-    def find_end_by_name(self, name):
+    def find_end_by_name(self, name, nesting = False): # nesting是不是可以嵌套
         cur_name = self[self.pos].name()
         level = 0
         for index, w in enumerate(self[self.pos:]):
             if w.name() == cur_name:
                 level += 1
             if w.name() == name:
-                if level > 1: 
+                if level > 1 and nesting: 
                     level -= 1
                     continue
 
