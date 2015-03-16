@@ -4,6 +4,7 @@
 #    email     :   fengidri@yeah.net
 #    version   :   1.0.1
 from nodes import Section, node_tree
+import logging
 
 SPLITER = ['\section', '\subsection', '\subsubsection']
 SPLITERCALL = [Section, Section, Section]
@@ -12,6 +13,10 @@ MAXLEVEL = 2
 class ParSection(object):
 
     def __init__(self, ws, Level, hide = False):
+        if Level == 0:
+            logging.info('')
+        logging.info('ParSection:     level: %s %s', 
+                Level, ws.show())
         self.section = None
         self.Paragraph = None
         self.subParagraph = None
@@ -19,6 +24,7 @@ class ParSection(object):
             self.section = SPLITERCALL[Level](ws)
 
         if Level >= MAXLEVEL:
+            logging.info('TEXT Paragraph: level: %s %s', Level, ws.show())
             self.subParagraph = node_tree(ws)
         else:
             self.Paragraph = SplitParagraph(ws, Level + 1)
@@ -40,26 +46,15 @@ class ParSection(object):
 
 class SplitParagraph(list):
     def __init__(self, ws, level): # sn: section name
-                                     # scn: section name callba
 
-        print '---------'
         sn = SPLITER[level]
-        snc = SPLITERCALL[level]
-        sn_index = []
+        sn_index = ws.getall(sn)
 
-        index = 0
-        while True:
-            word = ws.getword()
-            if not word:
-                break
-            if word.name() == sn:
-                sn_index.append(index)
-            ws.update()
-            index += 1
+        logging.info('SplitParagraph: level: %s %s', level, ws.show())
+        logging.debug("SplitParagraph: Sections:%s", sn_index)
 
         if not sn_index:
-            _ws = ws.slice(0)
-            self.append(ParSection(_ws, level, hide = True))
+            self.append(ParSection(ws, level, hide = True))
             return
 
 
@@ -69,13 +64,14 @@ class SplitParagraph(list):
 
         index = 0
         while True:
-            if index >= len(index) -1:
+            if index >= len(sn_index) -1:
                 break
 
             s = sn_index[index]
-            e = sn_index[index + 1]
+            index += 1
+            e = sn_index[index]
+
             _ws = ws.slice(s, e)
-            print type(_ws)
             self.append(ParSection(_ws, level))
 
         _ws = ws.slice(sn_index[-1])

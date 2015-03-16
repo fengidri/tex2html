@@ -7,7 +7,7 @@ import codecs
 
 import logging
 
-logging.basicConfig(level = logging.DEBUG)
+logging.basicConfig(level = logging.INFO, format = '%(message)s')
 
 from words import split
 from nodes import node_tree
@@ -32,10 +32,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i")
     parser.add_argument("-o")
-
-
+    parser.add_argument('-w', type=int)
     args = parser.parse_args()
-    savehtml(args.o, open_source_to_words(args.i))
+
+    if args.i:
+        ws = open_source_to_words(args.i)
+
+    if args.w:
+        ws.getword_byindex(args.w).show()
+
+    if args.o:
+        savehtml(args.o, ws)
+
 
 
 if __name__ == "__main__":

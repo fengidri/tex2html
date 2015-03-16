@@ -4,6 +4,7 @@
 #    email     :   fengidri@yeah.net
 #    version   :   1.0.1
 from words import Word
+import logging
 
 class LostParamsEx(Exception):
     def __init__(self, word):
@@ -23,7 +24,6 @@ class node_cpunc(object): # 形如: \%
     def __init__(self, ws):
         self.word = ws.getword()
         self.context = ws.getcontext(self.word)[1:2]
-        print self.context
 
         ws.update()
     def html(self):
@@ -141,9 +141,8 @@ class Section( node_control ):
         if not self.Params:
             raise LostParamsEx(self.word)
 
-        print self.Params
         c = self.Params[0].html()
-        h = "</p>\n<h%s>%s</h%s><p>\n" % (level, c, level)
+        h = "\n<h%s>%s</h%s>\n" % (level, c, level)
         return h
         
 
@@ -242,7 +241,7 @@ class DefHandle(node_control):
         name = self.word.name()
         self.de = self.MAPS.get(name)
         if not self.de:
-            raise Exception("Dont kwow: %s" % name)
+            raise Exception("Dont kwow: %s(%s)" % (name, self.word.pos))
     def html(self):
         return self.de.Params[0].html()
 
@@ -292,11 +291,11 @@ NODE_MAP={
 class node_tree(list):
     def __init__(self, ws):
         # 跳过开头的空白
-        print ws
+        logging.debug("node tree: from %s to %s" , ws.start, ws.end)
         while True:
             w = ws.getword()
             if not w:
-                return
+                break
             if not w.name() in ['\n', ' ']:
                 break
             ws.update()
@@ -304,7 +303,9 @@ class node_tree(list):
         while True:
             w = ws.getword()
             if not w:
-                return
+                break
+            logging.debug("node tree: scan word: %s, pos: %s, end: %s, wpos: %s", 
+                    w.showname(), ws.pos, ws.end, w.pos)
 
             if w.type == Word.TYPE_PUNC:
                 self.append(node_punc(ws))
@@ -320,6 +321,8 @@ class node_tree(list):
                 if not callback:
                     callback = DefHandle
                 self.append(callback(ws))
+        logging.debug("node tree exit: from %s to %s @ %s" , ws.start, ws.end, 
+                ws.pos)
 
     def html(self):
         h = [n.html() for n in self]

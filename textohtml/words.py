@@ -3,7 +3,7 @@
 #    time      :   2015-03-16 09:13:29
 #    email     :   fengidri@yeah.net
 #    version   :   1.0.1
-
+import logging
 class Word( object ): 
     "词法对象"
     TEX_CHAR = ['%','#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']
@@ -26,6 +26,14 @@ class Word( object ):
 
     def name(self):
         return self.nm
+
+    def showname(self):#
+        nm = self.nm
+        if nm == '\n': nm= '\\n'
+        if nm == ' ': nm = '\\space'
+        return nm
+    def show(self):
+        logging.info("name:%s, pos:%s", self.name(), self.pos)
            
 
 
@@ -46,11 +54,12 @@ class Source(object): # 对于souce 进行包装
 
 
 class PostionCounter(object): # 计算当前的位置
-    def __init__(self, source):
+    def __init__(self, source, words):
         self.line = 1
         self.col = 0
         self.source = source
         self.col_start = 0
+        self.words = words
 
     def update(self, char):
         if char == '\n':
@@ -59,7 +68,7 @@ class PostionCounter(object): # 计算当前的位置
 
     def get_pos(self):
         col = self.source.pos - self.col_start
-        return (self.line, col, self.source.pos)
+        return (self.line, col, self.source.pos, self.words.end)
 
 
 def get_control(source, pos):
@@ -99,10 +108,23 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
         self.words = words
 
         self.start = start
-        if not end: end = len(self.words) - 1
+        if not end: end = len(self.words) 
         self.end = end
 
         self.pos = start
+    def show(self):
+        return (self.start, self.end, self.pos)
+
+    def getall(self, name):
+        sn_index = []
+        for index, w in enumerate(self.words[self.pos:]):
+            if w.name() == name:
+                sn_index.append(index)
+        return sn_index
+
+
+    def reinit(self):
+        self.pos = self.start
 
     def append(self, w):
         self.words.append(w)
@@ -130,9 +152,9 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
                     level -= 1
                     continue
 
-                pos = self.pos + index + 1
-                ws = self.slice(self.pos - self.start, pos - self.start)
-                self.pos = pos
+                pos = self.pos + index
+                ws = self.slice(self.pos - self.start, pos - self.start + 1)
+                self.pos = pos + 1
                 return ws
         else:
             w = self[self.pos]
@@ -156,9 +178,11 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
     def slice(self, start, end=None):
         if end:
             if end < 0:
-                end = self.end + end + 1
+                end = self.end + end 
             else:
                 end = self.start + end
+        else:
+            end = self.end
 
         start = self.start + start
 
@@ -166,7 +190,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
                 end = end)
 
     def getword(self):
-        if self.pos > self.end or self.pos <= self.start:
+        if self.pos < self.start or self.pos >= self.end:
             return None
         return self.words[self.pos]
 
@@ -175,10 +199,11 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
             index = self.end + index + 1
         else:
             index = self.start + index
-        if index > self.end or index <= self.start:
+
+        if index >= self.end or index < self.start:
             return None
-        print self.pos, ' ', self.end, ' ', self.start, len(self.words)
-        return self.words[self.pos]
+        #print self.pos, ' ', self.end, ' ', self.start, len(self.words)
+        return self.words[index]
 
     def update(self):
         self.pos += 1
@@ -198,9 +223,9 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
 
 def split(src): # 对于src 进行词法分解
     source = Source(src)
-    poscounter = PostionCounter(source) # 统计当前的行号, 位置信息
-
     words = Words(src)
+    poscounter = PostionCounter(source, words) # 统计当前的行号, 位置信息
+
     text_pos = poscounter.get_pos()
     
     while True:
