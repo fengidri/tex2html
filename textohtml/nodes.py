@@ -23,6 +23,7 @@ class node_cpunc(object): # 形如: \%
     def __init__(self, ws):
         self.word = ws.getword()
         self.context = ws.getcontext(self.word)[1:2]
+        print self.context
 
         ws.update()
     def html(self):

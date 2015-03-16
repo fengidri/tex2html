@@ -8,6 +8,7 @@ class Word( object ):
     "词法对象"
     TEX_CHAR = ['%','#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']
     TEX_CONTROL_CHAR = ['#', '$', '%', '^', '&', '_', '{', '}', '~', '\\']
+    TEX_CONTROL_PUNC = [' ']
 
 
     TYPE_CONTROL = 1  # 控制序列
@@ -72,14 +73,14 @@ def get_control(source, pos):
 
     while source.getchar():
         char = source.getchar()
-        if length == 0:
-            if char in Word.TEX_CONTROL_CHAR:
+        if length == 1:
+            if char in Word.TEX_CONTROL_CHAR or char in Word.TEX_CONTROL_PUNC:
                 length += 1
                 name.append(char)
                 source.update()
-                tp = Word.TYPE_PUNC
+                tp = Word.TYPE_CPUNC
                 break
-        elif char.islower() or char.isupper():
+        if char.islower() or char.isupper():
             length+=1
             name.append(char)
             source.update()
