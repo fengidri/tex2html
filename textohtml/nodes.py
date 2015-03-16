@@ -299,7 +299,7 @@ class node_tree(list):
     def html(self):
 
         h = [n.html() for n in self]
-        return "<p>" + ''.join(h) + "</p>"
+        return ''.join(h)
 
 
 if __name__ == "__main__":

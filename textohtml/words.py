@@ -110,8 +110,16 @@ class Words(list):# 对于进行词法分析的结果进行包装, 是语法分�
         return self.source[s: e]
 
     def find_end_by_name(self, name):
+        cur_name = self[self.pos].name()
+        level = 0
         for index, w in enumerate(self[self.pos:]):
+            if w.name() == cur_name:
+                level += 1
             if w.name() == name:
+                if level > 1: 
+                    level -= 1
+                    continue
+
                 pos = self.pos + index + 1
                 ws = Words(self.source)
                 ws.extend(self[self.pos: pos])

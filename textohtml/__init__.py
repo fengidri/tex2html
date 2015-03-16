@@ -20,6 +20,11 @@ def savehtml(o, words):
     f = codecs.open(o, 'w','utf8')
     f.write(node_tree(words).html())
 
+def texstohtml(src, o):
+    words = split(src)
+    f = codecs.open(o, 'w','utf8')
+    f.write(node_tree(words).html())
+
 
 def main():
     import argparse
