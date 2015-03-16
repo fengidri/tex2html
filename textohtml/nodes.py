@@ -112,10 +112,12 @@ class node_control(object):
                     break
 
             if name == s:
+                # TODO 这里的nesting 还要进行思考
                 ps = ws.find_end_by_name(e, nesting=True)
                 p = node_tree(ps.slice(1, -1))
                 cb.append(p)
                 cr_num = 0# 一个参数后, 可以再吃一个空格
+                ws.back()
             else:
                 ws.back()
                 break
