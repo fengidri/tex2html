@@ -12,18 +12,19 @@ logging.basicConfig(level = logging.INFO, format = '%(message)s')
 
 from words import split
 from nodes import node_tree
+from pre import prehandler
 from paragraph import SplitParagraph
 
 def open_source_to_words(f):
     f = codecs.open(f, 'r','utf8')
-    return split(f.read())
+    return prehandler(split(f.read()))
 
 def savehtml(o, words):
     f = codecs.open(o, 'w','utf8')
     f.write(SplitParagraph(words, 0).html())
 
 def texstohtml(src, o):
-    words = split(src)
+    words = prehandler(split(src))
     f = codecs.open(o, 'w','utf8')
     f.write(node_tree(words).html())
 
@@ -37,7 +38,7 @@ def main():
     args = parser.parse_args()
 
     if args.i:
-        ws = open_source_to_words(args.i)
+        ws =open_source_to_words(args.i)
 
     if args.w:
         logging.info( ws.getword_byindex(args.w).show() )

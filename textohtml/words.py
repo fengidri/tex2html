@@ -113,6 +113,7 @@ def get_control(source, pos):
 
 
 def split(src): # 对于src 进行词法分解
+    logging.info('************ split ************')
     source = Source(src)
     words = Words(src)
     poscounter = PostionCounter(source, words) # 统计当前的行号, 位置信息
@@ -232,7 +233,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
 
     def find(self, name, nesting = False): # nesting是不是可以嵌套
         # 如果开启了nesting, 那么对于
-        logging.info('find:ws:%s', self.show())
+        logging.debug('find:ws:%s', self.show())
         for index, w in enumerate(self.words[self.pos: self.end]):
             if w.name() == name:
                 pos = self.pos + index

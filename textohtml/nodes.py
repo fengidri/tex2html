@@ -29,6 +29,29 @@ class node_cpunc(object): # 形如: \%
     def html(self):
         return self.context
 
+class node_comment(object):
+    def __init__(self, ws):
+        ws.update()
+
+    def html(self):
+        return ''
+
+class node_typing(object):
+    def __init__(self, ws):
+        s = len('\starttyping')
+        e = len('\stoptyping')
+        self.word = ws.getword()
+        ws.update()
+        self.context = ws.getcontext(self.word)[s: -1 * e]
+
+    def html( self ):
+        tp = self.context
+
+        tp = tp.replace('&', "&amp;" )
+        tp = tp.replace(  '<', '&lt;' )
+        tp = tp.replace(  '>', '&gt;' )
+        return "<pre>%s</pre>\n" %  tp
+
 class node_punc(object):
     def __init__(self, ws):
         self.word = ws.getword()
@@ -151,21 +174,6 @@ class Section( node_control ):
         
 
 
-class Typing( node_control ):
-    def init(self, ws):
-        tps = ws.find("\stoptyping")
-        s = self.word
-        e = tps.getword_byindex(-1)
-
-        self.context = ws.get_context_between(s, e)
-
-    def html( self ):
-        tp = self.context
-
-        tp = tp.replace('&', "&amp;" )
-        tp = tp.replace(  '<', '&lt;' )
-        tp = tp.replace(  '>', '&gt;' )
-        return "<pre>%s</pre>\n" %  tp
 
 class Itemize( node_control ):
     def init(self, ws):
@@ -277,7 +285,6 @@ NODE_MAP={
         '\section'       : Section,
         '\subsection'    : Section,
         '\subsubsection' : Section,
-        '\starttyping'   : Typing,
         '\startitemize'  : Itemize,
         '\item'          : Item,
         '\goto'          : Goto,
@@ -294,6 +301,13 @@ NODE_MAP={
                 }
 
 class node_tree(list):
+    handlemap = {
+            Word.TYPE_PUNC:    node_punc,
+            Word.TYPE_TEXT:    node_text,
+            Word.TYPE_CPUNC:   node_cpunc,
+            Word.TYPE_COMMENT: node_comment,
+            Word.TYPE_TYPING:  node_typing,
+            }
     def __init__(self, ws):
         # 跳过开头的空白
         logging.debug("node tree: from %s to %s" , ws.start, ws.end)
@@ -312,26 +326,15 @@ class node_tree(list):
             logging.debug("node tree: scan word: %s, pos: %s, end: %s, wpos: %s", 
                     w.showname(), ws.pos, ws.end, w.pos)
 
-            if w.type == Word.TYPE_PUNC:
-                self.append(node_punc(ws))
-
-            elif w.type == Word.TYPE_TEXT:
-                self.append(node_text(ws))
-
-            elif w.type == Word.TYPE_CPUNC:
-                self.append(node_cpunc(ws))
-
-           # elif w.type == Word.TYPE_COMMENT:
-           #     self.append(node_comment(ws))
-
-           # elif w.type == Word.TYPE_TYPING:
-           #     self.append(node_typing(ws))
+            cb = self.handlemap.get(w.type)
+            if cb: self.append(cb(ws))
 
             elif w.type == Word.TYPE_CONTROL:
                 callback = NODE_MAP.get(w.name())
                 if not callback:
                     callback = DefHandle
                 self.append(callback(ws))
+
         logging.debug("node tree exit: from %s to %s @ %s" , ws.start, ws.end, 
                 ws.pos)
 
