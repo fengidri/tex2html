@@ -15,8 +15,9 @@ class ParSection(object):
     def __init__(self, ws, Level, hide = False):
         if Level == 0:
             logging.info('')
-        logging.info('ParSection:     level: %s %s', 
-                Level, ws.show())
+
+        self.msg = 'ParSection:     level: %s %s' % (Level, ws.show())
+        logging.info(self.msg)
         self.section = None
         self.Paragraph = None
         self.subParagraph = None
@@ -30,10 +31,10 @@ class ParSection(object):
             self.Paragraph = SplitParagraph(ws, Level + 1)
 
     def html(self):
+        h = '\n<!-- %s -->\n' % self.msg 
         if self.section:
-            h = self.section.html()
-        else:
-            h = ''
+            h += self.section.html()
+
         if self.Paragraph:
             return h + self.Paragraph.html()
         else:
@@ -59,7 +60,7 @@ class SplitParagraph(list):
 
 
         if sn_index[0] != 0:
-            _ws = ws.slice(0, sn_index[0])
+            _ws = ws.sliceto(sn_index[0])
             self.append(ParSection(_ws, level, hide = True))
 
         index = 0

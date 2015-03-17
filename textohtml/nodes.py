@@ -37,7 +37,7 @@ class node_punc(object):
         self.name =  self.word.name()
 
         if self.name == '%':
-            ws.find_end_by_name('\n')
+            ws.find('\n')
             self.h =  ''
 
         elif self.name == ' ':
@@ -58,7 +58,7 @@ class node_punc(object):
 
         elif self.name == '$':
             #TODO
-            ws.find_end_by_name('$')
+            ws.find('$')
             self.h = ''
 
         else:
@@ -98,6 +98,7 @@ class node_control(object):
 
     def __get_params_or_attrs(self, ws, s, e, cb):
         cr_num = 0
+        logging.debug("get params or attrs for %s",  ws.getword().show())
         while True:
             ws.update()
             word = ws.getword()
@@ -113,17 +114,20 @@ class node_control(object):
             if name == '\n':
                 if cr_num == 0:
                     cr_num += 1
+                    continue
                 else:
                     ws.back()
                     break
 
             if name == s:
                 # TODO 这里的nesting 还要进行思考
-                ps = ws.find_end_by_name(e, nesting=True)
+                ps = ws.findnesting(e, nesting=s)
                 p = node_tree(ps.slice(1, -1))
+                ws.getword().show()
                 cb.append(p)
                 cr_num = 0# 一个参数后, 可以再吃一个空格
                 ws.back()
+                ws.getword().show()
             else:
                 ws.back()
                 break
@@ -149,8 +153,8 @@ class Section( node_control ):
 
 class Typing( node_control ):
     def init(self, ws):
-        tps = ws.find_end_by_name("\stoptyping")
-        s = tps.getword_byindex(0)
+        tps = ws.find("\stoptyping")
+        s = self.word
         e = tps.getword_byindex(-1)
 
         self.context = ws.get_context_between(s, e)
@@ -165,11 +169,11 @@ class Typing( node_control ):
 
 class Itemize( node_control ):
     def init(self, ws):
-        _ws = ws.find_end_by_name("\stopitemize", nesting=True)
-        self.tree = node_tree(_ws.slice(1, -1))
+        _ws = ws.findnesting("\stopitemize", nesting='\startitemize', inside = False)
+        self.tree = node_tree(_ws.slice(0, -1))
 
     def html(self ):
-        return "\n<ul>\n%s\n</ul>\n" % self.tree.html()
+        return "\n    <ul>\n%s\n    </ul>" % self.tree.html()
 
 
 class Item( node_control ):
@@ -180,7 +184,7 @@ class Item( node_control ):
         #if self.param:
         #    return '\n<li><b>%s</b>&nbsp;&nbsp;&nbsp;&nbsp;' % self.param[0].html()
         #TODO
-        return '\n<li>'
+        return '\n        <li>'
 
 
 class Goto( node_control ):
@@ -258,6 +262,7 @@ class Def(node_control):
                 self._getparams(ws)
                 DefHandle.MAPS[name] = self
                 break
+        ws.update()
 
     def html(self):
         return ''
@@ -315,6 +320,12 @@ class node_tree(list):
 
             elif w.type == Word.TYPE_CPUNC:
                 self.append(node_cpunc(ws))
+
+           # elif w.type == Word.TYPE_COMMENT:
+           #     self.append(node_comment(ws))
+
+           # elif w.type == Word.TYPE_TYPING:
+           #     self.append(node_typing(ws))
 
             elif w.type == Word.TYPE_CONTROL:
                 callback = NODE_MAP.get(w.name())

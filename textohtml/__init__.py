@@ -7,6 +7,7 @@ import codecs
 
 import logging
 
+#logging.basicConfig(level = logging.DEBUG, format = '%(message)s')
 logging.basicConfig(level = logging.INFO, format = '%(message)s')
 
 from words import split
@@ -39,7 +40,7 @@ def main():
         ws = open_source_to_words(args.i)
 
     if args.w:
-        ws.getword_byindex(args.w).show()
+        logging.info( ws.getword_byindex(args.w).show() )
 
     if args.o:
         savehtml(args.o, ws)

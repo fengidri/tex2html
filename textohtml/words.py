@@ -15,6 +15,8 @@ class Word( object ):
     TYPE_PUNC    = 2  # 特殊符号
     TYPE_TEXT    = 3  # 文字
     TYPE_CPUNC   = 4  # 形如\# \$ \% \^ \& \_ \{ \} \~ \\
+    TYPE_COMMENT = 5
+    TYPE_TYPING  = 6
 
     def __init__(self, t, l, name, pos):
         self.pos = pos 
@@ -33,7 +35,7 @@ class Word( object ):
         if nm == ' ': nm = '\\space'
         return nm
     def show(self):
-        logging.info("name:%s, pos:%s", self.name(), self.pos)
+        return "name:%s, pos:%s"% (self.showname(), self.pos)
            
 
 
@@ -102,117 +104,6 @@ def get_control(source, pos):
     return Word(tp, length, name, pos)
 
              
-class Words(object):# 对于进行词法分析的结果进行包装, 是语法分析中的依赖
-    def __init__(self, source, start = 0, end = None, words = []):
-        self.source = source # 记录source, 不是source 对象
-        self.words = words
-
-        self.start = start
-        if not end: end = len(self.words) 
-        self.end = end
-
-        self.pos = start
-    def show(self):
-        return (self.start, self.end, self.pos)
-
-    def getall(self, name):
-        sn_index = []
-        for index, w in enumerate(self.words[self.pos:]):
-            if w.name() == name:
-                sn_index.append(index)
-        return sn_index
-
-
-    def reinit(self):
-        self.pos = self.start
-
-    def append(self, w):
-        self.words.append(w)
-        self.end += 1
-
-    def getcontext(self, word): 
-        # 依据word 的pos 与length 得到对应的source
-        pos = word.pos[2]
-        length = word.len
-        return self.source[pos: pos + length]
-
-    def get_context_between(self, w1, w2): # 得到两个word 中间的context, 开区间
-        s = w1.pos[2] + w1.len
-        e = w2.pos[2] 
-        return self.source[s: e]
-
-    def find_end_by_name(self, name, nesting = False): # nesting是不是可以嵌套
-        cur_name = self.words[self.pos].name()
-        level = 0
-        for index, w in enumerate(self.words[self.pos:]):
-            if w.name() == cur_name:
-                level += 1
-            if w.name() == name:
-                if level > 1 and nesting: 
-                    level -= 1
-                    continue
-
-                pos = self.pos + index
-                ws = self.slice(self.pos - self.start, pos - self.start + 1)
-                self.pos = pos + 1
-                return ws
-        else:
-            w = self[self.pos]
-            msg = "NOT FOUND:%s from %s, %s" % (name, w.pos[0], w.pos[1])
-            raise Exception(msg)
-
-    def find_same(self, name):
-        end = False
-        for index, w in enumerate(self.words[self.pos:]):
-            if w.name() != name:
-                pos = self.pos + index 
-                break
-        else:
-            end = True
-            pos = self.pos + index  + 1
-
-        ws = self.slice(self.pos - self.start, pos - self.start)
-        self.pos = pos
-        return (ws, end)
-
-    def slice(self, start, end=None):
-        if end:
-            if end < 0:
-                end = self.end + end 
-            else:
-                end = self.start + end
-        else:
-            end = self.end
-
-        start = self.start + start
-
-        return Words(self.source, words = self.words, start= start,
-                end = end)
-
-    def getword(self):
-        if self.pos < self.start or self.pos >= self.end:
-            return None
-        return self.words[self.pos]
-
-    def getword_byindex(self, index):
-        if index < 0:
-            index = self.end + index + 1
-        else:
-            index = self.start + index
-
-        if index >= self.end or index < self.start:
-            return None
-        #print self.pos, ' ', self.end, ' ', self.start, len(self.words)
-        return self.words[index]
-
-    def update(self):
-        self.pos += 1
-
-    def back(self): # 使用要注意
-        self.pos -= 1
-
-    def __len__(self):
-        return self.end - self.start
 
 
 
@@ -275,6 +166,148 @@ def show_word_details(words):
                 name = 'space'
 
         print "%s|%s,%s" % (name, w.pos[0], w.pos[1])
+
+class Words(object):# 对于进行词法分析的结果进行包装, 是语法分析中的依赖
+    def __init__(self, source, start = 0, end = None, words = []):
+        self.source = source # 记录source, 不是source 对象
+        self.words = words
+
+        self.start = start
+        if not end: end = len(self.words) 
+        self.end = end
+
+        self.pos = start
+    def show(self):
+        return (self.start, self.end, self.pos)
+
+    def getall(self, name):# 得到所有名为name 的word 在Words中的index
+        sn_index = []
+        for index, w in enumerate(self.words[self.pos: self.end]):
+            if w.name() == name:
+                sn_index.append(index + self.pos - self.start)
+        return sn_index
+
+
+    def reinit(self):
+        self.pos = self.start
+
+    def append(self, w):
+        self.words.append(w)
+        self.end += 1
+
+    def getcontext(self, word): 
+        # 依据word 的pos 与length 得到对应的source
+        pos = word.pos[2]
+        length = word.len
+        return self.source[pos: pos + length]
+
+    def get_context_between(self, w1, w2): # 得到两个word 中间的context, 开区间
+        s = w1.pos[2] + w1.len
+        e = w2.pos[2] 
+        return self.source[s: e]
+
+    def findnesting(self, name, nesting, inside = True): # 可以嵌套
+        # 如果开启了nesting, 那么对于
+        logging.debug('find:ws:%s', self.show())
+        if inside:
+            level = 0
+        else:
+            level = 1
+        for index, w in enumerate(self.words[self.pos: self.end]):
+            if w.name() == nesting:
+                level += 1
+            if w.name() == name:
+                if level > 1: 
+                    level -= 1
+                    continue
+
+                pos = self.pos + index
+                ws = self.slice(self.pos - self.start, pos - self.start + 1)
+                self.pos = pos + 1
+                return ws
+        else:
+            w = self.words[self.pos]
+            msg = "NOT FOUND:%s from %s, %s" % (name, w.pos[0], w.pos[1])
+            raise Exception(msg)
+
+    def find(self, name, nesting = False): # nesting是不是可以嵌套
+        # 如果开启了nesting, 那么对于
+        logging.info('find:ws:%s', self.show())
+        for index, w in enumerate(self.words[self.pos: self.end]):
+            if w.name() == name:
+                pos = self.pos + index
+                ws = self.slice(self.pos - self.start, pos - self.start + 1)
+                self.pos = pos + 1
+                return ws
+        else:
+            w = self.words[self.pos]
+            msg = "NOT FOUND:%s from %s, %s" % (name, w.pos[0], w.pos[1])
+            raise Exception(msg)
+
+    def find_same(self, name):
+        end = False
+        for index, w in enumerate(self.words[self.pos: self.end]):
+            if w.name() != name:
+                pos = self.pos + index 
+                break
+        else:
+            end = True
+            pos = self.pos + index  + 1
+
+        ws = self.slice(self.pos - self.start, pos - self.start)
+        self.pos = pos
+        return (ws, end)
+    def sliceto(self, end):
+        if end:
+            if end < 0:
+                end = self.end + end 
+            else:
+                end = self.start + end
+        else:
+            end = self.end
+
+        start = self.pos
+
+        return Words(self.source, words = self.words, start= start, end = end)
+
+
+    def slice(self, start, end=None):
+        if end:
+            if end < 0:
+                end = self.end + end 
+            else:
+                end = self.start + end
+        else:
+            end = self.end
+
+        start = self.start + start
+
+        return Words(self.source, words = self.words, start= start, end = end)
+
+    def getword(self):
+        if self.pos < self.start or self.pos >= self.end:
+            return None
+        return self.words[self.pos]
+
+    def getword_byindex(self, index):
+        if index < 0:
+            index = self.end + index 
+        else:
+            index = self.start + index
+
+        if index >= self.end or index < self.start:
+            return None
+        #print self.pos, ' ', self.end, ' ', self.start, len(self.words)
+        return self.words[index]
+
+    def update(self):
+        self.pos += 1
+
+    def back(self): # 使用要注意
+        self.pos -= 1
+
+    def __len__(self):
+        return self.end - self.start
 
 if __name__ == "__main__":
     pass
