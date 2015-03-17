@@ -11,7 +11,7 @@ import logging
 
 def prehandler(ws):
     logging.info('************ prehandler ************')
-    _ws = Words(ws.source, words = [])#TODO
+    _ws = Words(ws.source)
     while True:
         w = ws.getword()
         if not w: break

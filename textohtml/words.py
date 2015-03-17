@@ -169,8 +169,10 @@ def show_word_details(words):
         print "%s|%s,%s" % (name, w.pos[0], w.pos[1])
 
 class Words(object):# 对于进行词法分析的结果进行包装, 是语法分析中的依赖
-    def __init__(self, source, start = 0, end = None, words = []):
+    def __init__(self, source, start = 0, end = None, words = None):
         self.source = source # 记录source, 不是source 对象
+        if not words:
+            words = []
         self.words = words
 
         self.start = start
