@@ -120,8 +120,8 @@ class node_control(object):
         self.__get_params_or_attrs(ws, '[', ']', self.Attrs)
 
     def __get_params_or_attrs(self, ws, s, e, cb):
-        cr_num = 0
-        logging.debug("get params or attrs for %s",  ws.getword().show())
+        #TODO
+        first_lf = None
         while True:
             ws.update()
             word = ws.getword()
@@ -130,30 +130,27 @@ class node_control(object):
 
             name = word.name()
 
-            # 序列后的空格可以被吃掉,  同样参数后的空格也会被吃掉
-            if name == ' ': continue
+            if name == ' ': continue # 中间所有的空格都是无视的
 
-            #但是回车只能吃一个空格
-            if name == '\n':
-                if cr_num == 0:
-                    cr_num += 1
+            elif name == '\n':
+                if first_lf == None: # 记录第一个回车的位置
+                    first_lf = ws.getpos()
                     continue
-                else:
-                    ws.back()
+                else: # 第二个回车退出
                     break
 
-            if name == s:
-                # TODO 这里的nesting 还要进行思考
+            elif name == s:
                 ps = ws.findnesting(e, nesting=s)
                 p = node_tree(ps.slice(1, -1))
-                ws.getword().show()
                 cb.append(p)
-                cr_num = 0# 一个参数后, 可以再吃一个空格
+
                 ws.back()
-                ws.getword().show()
+                first_lf = None
             else:
                 ws.back()
                 break
+        if first_lf:#遇到过换行, 重新指向换行
+            ws.initpos(first_lf)
 
 
 class Section( node_control ):
@@ -185,13 +182,9 @@ class Itemize( node_control ):
 
 
 class Item( node_control ):
-    def init(self, ws):
-        pass
-
     def html( self ):
-        #if self.param:
-        #    return '\n<li><b>%s</b>&nbsp;&nbsp;&nbsp;&nbsp;' % self.param[0].html()
-        #TODO
+        if self.Params:
+            return '\n<li><b>%s</b>&nbsp;&nbsp;&nbsp;&nbsp;' % self.Params[0].html()
         return '\n        <li>'
 
 

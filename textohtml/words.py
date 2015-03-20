@@ -190,6 +190,12 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
                 sn_index.append(index + self.pos - self.start)
         return sn_index
 
+    def getpos(self):
+        return self.pos
+
+    def initpos(self, pos):
+        self.pos = pos
+
 
     def reinit(self):
         self.pos = self.start
