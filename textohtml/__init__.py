@@ -38,6 +38,10 @@ def texstohtml(src, o):
     f = codecs.open(o, 'w','utf8')
     f.write(html)
 
+def texstohtmls(src):
+        words = prehandler(split(src))
+        html = SplitParagraph(words, 0).html()
+        return html
 
 def main():
     import argparse
