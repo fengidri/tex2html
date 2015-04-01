@@ -198,7 +198,7 @@ class Goto( node_control ):
 class Img( node_control ):
     def html( self ):
         #TODO 
-        return "<img src=%s >" % (self.Param[0].html())
+        return "<img src=%s >" % (self.Params[0].html())
 
 class Par( node_control ):
     def html( self ):
