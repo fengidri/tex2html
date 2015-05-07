@@ -4,7 +4,7 @@
 #    email     :   fengidri@yeah.net
 #    version   :   1.0.1
 import logging
-class Word( object ): 
+class Word( object ):
     "词法对象"
     TEX_CHAR = ['%','#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']
     TEX_CONTROL_CHAR = ['#', '$', '%', '^', '&', '_', '{', '}', '~', '\\']
@@ -19,7 +19,7 @@ class Word( object ):
     TYPE_TYPING  = 6
 
     def __init__(self, t, l, name, pos):
-        self.pos = pos 
+        self.pos = pos
 
         self.len = l   # 长度
         self.type = t   # 对应类型
@@ -35,8 +35,9 @@ class Word( object ):
         if nm == ' ': nm = '\\space'
         return nm
     def show(self):
-        return "name:%s, pos:%s"% (self.showname(), self.pos)
-           
+        return "name:%s, line:%s column:%s"% (self.showname(),
+                self.pos[0], self.pos[1])
+
 
 
 class Source(object): # 对于souce 进行包装
@@ -103,7 +104,7 @@ def get_control(source, pos):
 
     return Word(tp, length, name, pos)
 
-             
+
 
 
 
@@ -119,7 +120,7 @@ def split(src): # 对于src 进行词法分解
     poscounter = PostionCounter(source, words) # 统计当前的行号, 位置信息
 
     text_pos = poscounter.get_pos()
-    
+
     while True:
         char =  source.getchar()
         if not char : break
@@ -145,13 +146,13 @@ def split(src): # 对于src 进行词法分解
                 w = get_control(source, poscounter.get_pos())
                 words.append(w)
 
-                
+
                 # 处理结束的char 不是序列的, 再次进入循环
                 continue
         else:
             if text_pos == None:
                 text_pos = poscounter.get_pos()
-            
+
             poscounter.update(char)  # 更新行
             source.update()
     return words
@@ -176,7 +177,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
         self.words = words
 
         self.start = start
-        if not end: end = len(self.words) 
+        if not end: end = len(self.words)
         self.end = end
 
         self.pos = start
@@ -204,7 +205,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
         self.words.append(w)
         self.end += 1
 
-    def getcontext(self, word): 
+    def getcontext(self, word):
         # 依据word 的pos 与length 得到对应的source
         pos = word.pos[2]
         length = word.len
@@ -212,7 +213,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
 
     def get_context_between(self, w1, w2): # 得到两个word 中间的context, 开区间
         s = w1.pos[2] + w1.len
-        e = w2.pos[2] 
+        e = w2.pos[2]
         return self.source[s: e]
 
     def findnesting(self, name, nesting, inside = True): # 可以嵌套
@@ -226,7 +227,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
             if w.name() == nesting:
                 level += 1
             if w.name() == name:
-                if level > 1: 
+                if level > 1:
                     level -= 1
                     continue
 
@@ -257,7 +258,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
         end = False
         for index, w in enumerate(self.words[self.pos: self.end]):
             if w.name() != name:
-                pos = self.pos + index 
+                pos = self.pos + index
                 break
         else:
             end = True
@@ -269,7 +270,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
     def sliceto(self, end):
         if end:
             if end < 0:
-                end = self.end + end 
+                end = self.end + end
             else:
                 end = self.start + end
         else:
@@ -283,7 +284,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
     def slice(self, start, end=None):
         if end:
             if end < 0:
-                end = self.end + end 
+                end = self.end + end
             else:
                 end = self.start + end
         else:
@@ -300,7 +301,7 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
 
     def getword_byindex(self, index):
         if index < 0:
-            index = self.end + index 
+            index = self.end + index
         else:
             index = self.start + index
 

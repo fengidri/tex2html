@@ -92,7 +92,7 @@ class node_punc(object):
     def html(self):
         return self.h
 
-class node_control(object): 
+class node_control(object):
     """
         1. 控制序列后面出现的{}, [], 一定会被处理掉
         2. 控制序列后面出现的\n, space 也会被处理掉
@@ -168,7 +168,7 @@ class Section( node_control ):
         c = self.Params[0].html()
         h = "\n<h%s>%s</h%s>\n" % (level, c, level)
         return h
-        
+
 
 
 
@@ -191,13 +191,13 @@ class Item( node_control ):
 class Goto( node_control ):
 
     def html( self ):
-        return "&nbsp;<a href=%s >%s</a>&nbsp;" % (self.Params[1].html(), 
+        return "&nbsp;<a href=%s >%s</a>&nbsp;" % (self.Params[1].html(),
                 self.Params[0].html())
         return ''
 
 class Img( node_control ):
     def html( self ):
-        #TODO 
+        #TODO
         return "<img src=%s >" % (self.Params[0].html())
 
 class Par( node_control ):
@@ -246,7 +246,7 @@ class DefHandle(node_control):
         name = self.word.name()
         self.de = self.MAPS.get(name)
         if not self.de:
-            raise Exception("Dont kwow: %s(%s)" % (name, self.word.pos))
+            raise Exception("Dont know: %s@%s, %s" % (name, self.word.pos[0,2]))
     def html(self):
         return self.de.Params[0].html()
 
@@ -274,7 +274,7 @@ class backslash(node_control):
         return '\\'
 
 
-NODE_MAP={ 
+NODE_MAP={
         '\section'       : Section,
         '\subsection'    : Section,
         '\subsubsection' : Section,
@@ -316,7 +316,7 @@ class node_tree(list):
             w = ws.getword()
             if not w:
                 break
-            logging.debug("node tree: scan word: %s, pos: %s, end: %s, wpos: %s", 
+            logging.debug("node tree: scan word: %s, pos: %s, end: %s, wpos: %s",
                     w.showname(), ws.pos, ws.end, w.pos)
 
             cb = self.handlemap.get(w.type)
@@ -328,7 +328,7 @@ class node_tree(list):
                     callback = DefHandle
                 self.append(callback(ws))
 
-        logging.debug("node tree exit: from %s to %s @ %s" , ws.start, ws.end, 
+        logging.debug("node tree exit: from %s to %s @ %s" , ws.start, ws.end,
                 ws.pos)
 
     def html(self):
