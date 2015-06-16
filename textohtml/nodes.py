@@ -246,7 +246,9 @@ class DefHandle(node_control):
         name = self.word.name()
         self.de = self.MAPS.get(name)
         if not self.de:
-            raise Exception("Dont know: %s@%s, %s" % (name, self.word.pos[0,2]))
+            raise Exception("Dont know: %s@%s, %s" % (name,
+                self.word.pos[0], self.word.pos[2]))
+
     def html(self):
         return self.de.Params[0].html()
 
