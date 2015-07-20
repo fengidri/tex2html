@@ -6,28 +6,30 @@
 
 from textohtml import open_source_to_words, savehtml
 import codecs
+import textohtml
 
 
 import argparse
 
 import os
-import pyinotify
+import sys
 
 import traceback
 Config = None
 
-class OnWriteHandler(pyinotify.ProcessEvent):
-    def process_IN_MODIFY(self, event):
-        path = os.path.join(event.path,event.name)
-        if path != Config.i:
-            return
-        try:
-            print "build: %s" % Config.i
-            handle()
-        except:
-            traceback.print_exc()
 
 def inotify():
+    import pyinotify
+    class OnWriteHandler(pyinotify.ProcessEvent):
+        def process_IN_MODIFY(self, event):
+            path = os.path.join(event.path,event.name)
+            if path != Config.i:
+                return
+            try:
+                print "build: %s" % Config.i
+                handle()
+            except:
+                traceback.print_exc()
     path = os.path.dirname(Config.i)
 
     wm = pyinotify.WatchManager()
@@ -48,12 +50,13 @@ def inotify():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i",    help='Input file. ft=mkiv')
-    parser.add_argument("-o",    help='Output file. ft=html')
+    parser.add_argument("-o",    help='Output file. ft=html', default = '-')
     parser.add_argument("--js",  help='JS file. ft=js')
     parser.add_argument("--css", help='CSS file. ft=css')
 
     parser.add_argument('-n', type=int)
     parser.add_argument('--inotify', type=bool, default=False)
+    parser.add_argument('--type', default="html")
     global Config
     Config = parser.parse_args()
 
@@ -65,28 +68,39 @@ def main():
         inotify()
 
 def handle():
-    if Config.i:
-        ws =open_source_to_words(Config.i)
+    if not Config.i:
+        return
 
-    if Config.n:
-        logging.info( ws.getword_byindex(Config.n).show() )
+    f = codecs.open(Config.i, 'r','utf8')
+    content = f.read()
 
-    if Config.o:
-        print '-------'
+    if Config.o == '-':
+        f = sys.stdout
+    else:
         f = codecs.open(Config.o, 'w','utf8')
-        if Config.js:
-            f.write('<script>\n')
-            f.write(open(Config.js).read())
-            f.write('\n</script>\n')
 
-        if Config.css:
-            f.write('<style>\n')
-            f.write(open(Config.css).read())
-            f.write('\n</style>\n')
+    if Config.js:
+        f.write('<script>\n')
+        f.write(open(Config.js).read())
+        f.write('\n</script>\n')
 
-        savehtml(f, ws)
-        f.close()
+    if Config.css:
+        f.write('<style>\n')
+        f.write(open(Config.css).read())
+        f.write('\n</style>\n')
+
+    if Config.type == "markdown":
+        res = textohtml.markdown(content)
+    else:
+        res = textohtml.html(content)
+
+    f.write(res)
+    f.close()
 
 if __name__ == "__main__":
     main()
 
+    #ws =open_source_to_words(Config.i)
+
+    #if Config.n:
+    #    logging.info( ws.getword_byindex(Config.n).show() )

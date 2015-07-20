@@ -11,7 +11,7 @@ import logging
 import codecs
 
 #logging.basicConfig(level = logging.DEBUG, format = '%(message)s')
-logging.basicConfig(level = logging.INFO, format = '%(message)s')
+logging.basicConfig(level = logging.ERROR, format = '%(message)s')
 
 from words import split
 from nodes import node_tree
@@ -24,6 +24,14 @@ def open_source_to_words(f):
 
 def savehtml(f, words):
     f.write(SplitParagraph(words, 0).html())
+
+def markdown(content):
+    ws = prehandler(split(content))
+    return SplitParagraph(ws, 0).md()
+
+def html(content):
+    ws = prehandler(split(content))
+    return SplitParagraph(ws, 0).html()
 
 def texstohtml(src, o):
     import traceback

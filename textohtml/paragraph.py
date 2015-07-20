@@ -31,7 +31,8 @@ class ParSection(object):
             self.Paragraph = SplitParagraph(ws, Level + 1)
 
     def html(self):
-        h = '\n<!-- %s -->\n' % self.msg 
+        #h = '\n<!-- %s -->\n' % self.msg
+        h = ''
         if self.section:
             h += self.section.html()
 
@@ -39,6 +40,16 @@ class ParSection(object):
             return h + self.Paragraph.html()
         else:
             return "%s<p>%s</p>\n" % (h ,self.subParagraph.html())
+
+    def md(self):
+        h = ''
+        if self.section:
+            h += self.section.md()
+
+        if self.Paragraph:
+            return h + self.Paragraph.md()
+        else:
+            return "%s\n%s\n\n" % (h ,self.subParagraph.md())
 
 
 
@@ -80,6 +91,10 @@ class SplitParagraph(list):
 
     def html(self):
         h = [n.html() for n in self]
+        return ''.join(h)
+
+    def md(self):
+        h = [n.md() for n in self]
         return ''.join(h)
 
 

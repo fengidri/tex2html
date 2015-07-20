@@ -20,14 +20,18 @@ class node_text(object):
     def html(self):
         return self.context
 
+    md = html
+
 class node_cpunc(object): # 形如: \%
     def __init__(self, ws):
         self.word = ws.getword()
         self.context = ws.getcontext(self.word)[1:2]
 
         ws.update()
+
     def html(self):
         return self.context
+    md = html
 
 class node_comment(object):
     def __init__(self, ws):
@@ -35,6 +39,7 @@ class node_comment(object):
 
     def html(self):
         return ''
+    md = html
 
 class node_typing(object):
     def __init__(self, ws):
@@ -51,6 +56,14 @@ class node_typing(object):
         tp = tp.replace(  '<', '&lt;' )
         tp = tp.replace(  '>', '&gt;' )
         return "<pre>%s</pre>\n" %  tp
+
+    def md( self ):
+        tp = self.context
+
+        tp = tp.replace('&', "&amp;" )
+        tp = tp.replace(  '<', '&lt;' )
+        tp = tp.replace(  '>', '&gt;' )
+        return "\n```\n%s\n```\n" %  tp
 
 class node_punc(object):
     def __init__(self, ws):
@@ -75,7 +88,7 @@ class node_punc(object):
             if e:# 忽略最后换行
                 self.h = ''
             elif len(_ws) > 1:
-                self.h = "</p>\n\n<p>"
+                self.h = None
             else:
                 self.h = '\n'
 
@@ -90,6 +103,13 @@ class node_punc(object):
 
 
     def html(self):
+        if self.h == None:
+            return "</p>\n\n<p>"
+        return self.h
+
+    def md(self):
+        if self.h == None:
+            return "\n\n"
         return self.h
 
 class node_control(object):
@@ -113,6 +133,7 @@ class node_control(object):
 
     def html(self):
         return ''
+    md = html
     def _getparams(self, ws): # 得到参数, 参数可以有多个, {}
         self.__get_params_or_attrs(ws, '{', '}', self.Params)
 
@@ -208,11 +229,22 @@ class Item( node_control ):
 
 class Goto( node_control ):
     def md( self ):
-        return "[%s](%s)" % (self.Params[1].md(), self.Params[0].md())
+        name = self.Params[0].md()
+        if len(self.Params) == 1:
+            url = name
+        else:
+            url = self.Params[1].md()
+
+        return "[%s](%s)" % (name, url)
 
     def html( self ):
-        return "&nbsp;<a href=%s >%s</a>&nbsp;" % (self.Params[1].html(),
-                self.Params[0].html())
+        name = self.Params[0].md()
+        if len(self.Params) == 1:
+            url = name
+        else:
+            url = self.Params[1].md()
+
+        return "&nbsp;<a href=%s >%s</a>&nbsp;" % (url, name)
 
 class Img( node_control ):
     def html( self ):
@@ -234,7 +266,7 @@ class starttable(node_control):
     def html( self ):
         return "<table>\n"
 
-    def html( self ):
+    def md( self ):
         return "<table>\n"
 
 class stoptable(node_control):
@@ -274,7 +306,7 @@ class Bold(node_control):
 
     def md(self):
         if len(self.Params) > 0:
-            return "`%s'" % self.Params[0].md()
+            return "`%s`" % self.Params[0].md()
         return ""
 
 class Newline(node_control):
@@ -319,6 +351,7 @@ class backslash(node_control):
 
     def html(self):
         return '\\'
+
 
 
 NODE_MAP={
@@ -380,6 +413,10 @@ class node_tree(list):
 
     def html(self):
         h = [n.html() for n in self]
+        return ''.join(h)
+
+    def md(self):
+        h = [n.md() for n in self]
         return ''.join(h)
 
 
