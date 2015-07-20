@@ -18,20 +18,30 @@ from nodes import node_tree
 from pre import prehandler
 from paragraph import SplitParagraph
 
-def open_source_to_words(f):
-    f = codecs.open(f, 'r','utf8')
-    return prehandler(split(f.read()))
+def handle(f=None, buf=None):
+    if f:
+        buf = codecs.open(f, 'r','utf8').read()
 
-def savehtml(f, words):
-    f.write(SplitParagraph(words, 0).html())
+    if not buf:
+        return
 
-def markdown(content):
-    ws = prehandler(split(content))
-    return SplitParagraph(ws, 0).md()
+    ws = prehandler(split(buf))
+    return SplitParagraph(ws, 0)
 
-def html(content):
-    ws = prehandler(split(content))
-    return SplitParagraph(ws, 0).html()
+
+def markdown(path=None, buf=None):
+    ws = handle(path, buf)
+    if not ws:
+        return ''
+
+    return ws.md()
+
+def html(path=None, buf=None):
+    ws = handle(path, buf)
+    if not ws:
+        return ''
+
+    return ws.html()
 
 def texstohtml(src, o):
     import traceback
@@ -44,14 +54,6 @@ def texstohtml(src, o):
 
     f = codecs.open(o, 'w','utf8')
     f.write(html)
-
-def texstohtmls(src):
-        words = prehandler(split(src))
-        html = SplitParagraph(words, 0).html()
-        return html
-
-
-
 
 if __name__ == "__main__":
     pass

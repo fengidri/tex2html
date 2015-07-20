@@ -2,21 +2,17 @@
 #    author    :   丁雪峰
 #    time      :   2015-06-23 14:13:15
 #    email     :   fengidri@yeah.net
-#    version   :   1.0.1
+#    version   :   2.0.1
 
-from textohtml import open_source_to_words, savehtml
 import codecs
 import textohtml
 
-
-import argparse
-
 import os
 import sys
-
+import argparse
 import traceback
-Config = None
 
+Config = None
 
 def inotify():
     import pyinotify
@@ -49,31 +45,23 @@ def inotify():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i",    help='Input file. ft=mkiv')
+    parser.add_argument("input",    help='Input file. ft=mkiv')
     parser.add_argument("-o",    help='Output file. ft=html', default = '-')
     parser.add_argument("--js",  help='JS file. ft=js')
     parser.add_argument("--css", help='CSS file. ft=css')
 
-    parser.add_argument('-n', type=int)
-    parser.add_argument('--inotify', type=bool, default=False)
     parser.add_argument('--type', default="html")
+    parser.add_argument('--inotify', type=bool, default=False)
     global Config
     Config = parser.parse_args()
 
-    if Config.i:
-        Config.i = os.path.realpath(Config.i)
+    Config.input = os.path.realpath(Config.input)
 
     handle()
     if Config.inotify:
         inotify()
 
 def handle():
-    if not Config.i:
-        return
-
-    f = codecs.open(Config.i, 'r','utf8')
-    content = f.read()
-
     if Config.o == '-':
         f = sys.stdout
     else:
@@ -90,9 +78,9 @@ def handle():
         f.write('\n</style>\n')
 
     if Config.type == "markdown":
-        res = textohtml.markdown(content)
+        res = textohtml.markdown(path = Config.input)
     else:
-        res = textohtml.html(content)
+        res = textohtml.html(path = Config.input)
 
     f.write(res)
     f.close()
