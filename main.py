@@ -12,6 +12,8 @@ import argparse
 
 import os
 import pyinotify
+
+import traceback
 Config = None
 
 class OnWriteHandler(pyinotify.ProcessEvent):
@@ -23,7 +25,7 @@ class OnWriteHandler(pyinotify.ProcessEvent):
             print "build: %s" % Config.i
             handle()
         except:
-            pass
+            traceback.print_exc()
 
 def inotify():
     path = os.path.dirname(Config.i)
@@ -57,9 +59,9 @@ def main():
 
     if Config.i:
         Config.i = os.path.realpath(Config.i)
-    if not Config.inotify:
-        handle()
-    else:
+
+    handle()
+    if Config.inotify:
         inotify()
 
 def handle():

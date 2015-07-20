@@ -158,6 +158,16 @@ class Section( node_control ):
         ws.update()
         self.name = self.word.name()
 
+    def md(self):
+        name = self.name
+        level = name.count('sub') + 3
+
+        if not self.Params:
+            raise LostParamsEx(self.word)
+
+        c = self.Params[0].html()
+        return "\n%s %s\n" % ('#' * level, c)
+
     def html( self ):
         name = self.name
         level = name.count('sub') + 3
@@ -177,11 +187,19 @@ class Itemize( node_control ):
         _ws = ws.findnesting("\stopitemize", nesting='\startitemize', inside = False)
         self.tree = node_tree(_ws.slice(0, -1))
 
+    def md(self):
+        return "\n  %s" % self.tree.html()
+
     def html(self ):
         return "\n    <ul>\n%s\n    </ul>" % self.tree.html()
 
 
 class Item( node_control ):
+    def md(self):
+        if self.Params:
+            return '\n* %s' % self.Params[0].md()
+        return '\n  '
+
     def html( self ):
         if self.Params:
             return '\n<li><b>%s</b>&nbsp;&nbsp;&nbsp;&nbsp;' % self.Params[0].html()
@@ -189,23 +207,33 @@ class Item( node_control ):
 
 
 class Goto( node_control ):
+    def md( self ):
+        return "[%s](%s)" % (self.Params[1].md(), self.Params[0].md())
 
     def html( self ):
         return "&nbsp;<a href=%s >%s</a>&nbsp;" % (self.Params[1].html(),
                 self.Params[0].html())
-        return ''
 
 class Img( node_control ):
     def html( self ):
         #TODO
         return "<img src=%s >" % (self.Params[0].html())
 
+    def md( self ):
+        #TODO
+        return "![img](%s)" % (self.Params[0].html())
+
 class Par( node_control ):
     def html( self ):
         return "<br />"
 
+    def md( self ):
+        return "\n\n"
 
 class starttable(node_control):
+    def html( self ):
+        return "<table>\n"
+
     def html( self ):
         return "<table>\n"
 
@@ -213,21 +241,30 @@ class stoptable(node_control):
     def html( self ):
         return "</table>\n"
 
+    def md( self ):
+        return "\n"
+
 class NC(node_control):
     def html( self ):
         return  "<tr><td>"
+
+    def md( self ):
+        return  "\n"
 
 class AR(node_control):
     def html( self ):
         return  "</td></tr>\n"
 
-class VL(node_control):
-    def html( self ):
-        return "</td><td>"
+    def md( self ):
+        return  "\n"
 
 class VL(node_control):
     def html( self ):
         return "</td><td>"
+
+    def md( self ):
+        return "|"
+
 
 class Bold(node_control):
     def html(self):
@@ -235,9 +272,17 @@ class Bold(node_control):
             return "<b>%s</b>" % self.Params[0].html()
         return ""
 
+    def md(self):
+        if len(self.Params) > 0:
+            return "`%s'" % self.Params[0].md()
+        return ""
+
 class Newline(node_control):
     def html(self):
         return "</p>\n\n<p>"
+
+    def html(self):
+        return "\n\n"
 
 class DefHandle(node_control):
     MAPS = {}
