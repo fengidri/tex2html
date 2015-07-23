@@ -43,16 +43,17 @@ class Word( object ):
 class Source(object): # 对于souce 进行包装
     def __init__(self, source):
         self.pos = 0
+        self.line  = 1
+        self.col = 0
         self.source = source
-        self.length = len(source)
 
     def getchar(self): # 得到当前的char
-        if self.pos >= self.length:
-            return None
-        return self.source[self.pos]
-
-    def update(self): # 记数器+1
-        self.pos += 1
+        for i, c in enumerate(self.source):
+            self.col += 1
+            yield c, self.line, self.col, i
+            if '\n' == c:
+                self.line += 1
+                self.col = 0
 
 
 
