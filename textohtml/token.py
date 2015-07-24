@@ -6,16 +6,17 @@
 import logging
 logging.basicConfig(level = logging.INFO, format = '%(message)s')
 
+TYPE_CONTROL = 1  # 控制序列
+TYPE_TEXT    = 3  # 文字
+TYPE_TEXPUNC = 4
+TYPE_COMMENT = 5
+TYPE_CONPUNC = 6# 形如\# \$ \% \^ \& \_ \{ \} \~ \\
+
+RES_CONTINUE = 1
+RES_STOP     = 0
+RES_REDO     = 2 # 对于传进入来的 char 要重新处理一次
 
 class Token(object):
-    TYPE_CONTROL = 1  # 控制序列
-    TYPE_TEXT    = 3  # 文字
-    TYPE_TEXPUNC = 4  # 形如\# \$ \% \^ \& \_ \{ \} \~ \\
-    TYPE_COMMENT = 5
-
-    RES_CONTINUE = 1
-    RES_STOP     = 0
-    RES_REDO     = 2 # 对于传进入来的 char 要重新处理一次
 
     tokes = []
     Source       = None
@@ -45,14 +46,20 @@ class Token(object):
         """
         pass
 
+    def name(self):
+        return ''
+
 class Token_Text(Token):
-    Type = Token.TYPE_TEXT
+    Type = TYPE_TEXT
     def log(self):
         logging.info("@%s: TEXT: %s", self.position(), self.content())
 
+    def name(self):
+        return 'text'
+
 
 class Token_TexPunc(Token):
-    Type = Token.TYPE_TEXPUNC
+    Type = TYPE_TEXPUNC
     def __init__(self, char):
         Token.__init__(self, char)
         self.punc = char[0]
@@ -64,39 +71,48 @@ class Token_TexPunc(Token):
     def update(self, char):
         if self.punc == ' ':
             if char[0] == ' ':
-                return Token.RES_CONTINUE
+                return RES_CONTINUE
             else:
                 self.e = char[3] - 1
-                return Token.RES_REDO
+                return RES_REDO
 
         if self.punc == '\n':
             if char[0] == '\n':
-                return Token.RES_CONTINUE
+                return RES_CONTINUE
             else:
                 self.e = char[3] - 1
-                return Token.RES_REDO
+                return RES_REDO
 
         self.e = char[3] - 1
-        return Token.RES_REDO
+        return RES_REDO
+
+    def name(self):
+        return self.punc
 
 
 
 class Token_Comment(Token):
-    Type = Token.TYPE_COMMENT
+    Type = TYPE_COMMENT
     def update(self, char):
         if char[0] == '\n':
             self.e = char[3]
-            return Token.RES_STOP
-        return Token.RES_CONTINUE
+            return RES_STOP
+        return RES_CONTINUE
 
     def log(self):
         comment = self.content()
         comment = comment.replace('\n', '\\n')
         logging.info("@%s: Comment : %s", self.position(), comment)
 
+    def name(self):
+        return 'comment'
+
 class Token_Control(Token):
-    Type = Token.TYPE_CONTROL
+    Type = TYPE_CONTROL
     except_space = False
+
+    def name(self):
+        return self.content()
 
     def log(self):
         comment = self.content()
@@ -112,30 +128,31 @@ class Token_Control(Token):
             if c in ['#', '$', '%', '^', '&', '_', '{', '}', '~', '\\']:
                 # 形如: \$ \#
                 self.e = char[3]
-                return Token.RES_STOP
+                self.Type = TYPE_CONPUNC
+                return RES_STOP
 
             elif not (c.islower()  or c.isupper()):
                 raise Exception("Control Token Error: @%d,%d" % (self.s[1], self.s[2]))
 
             else:
-                return Token.RES_CONTINUE
+                return RES_CONTINUE
 
         if self.except_space:
             if c == ' ' or c == '\r': # 形如 "\section    "
-                return Token.RES_CONTINUE
+                return RES_CONTINUE
             else:
-                return Token.RES_REDO
+                return RES_REDO
         else:
             if c == ' ':
                 self.e = char[3] - 1
                 self.except_space = True
-                return Token.RES_CONTINUE
+                return RES_CONTINUE
 
             if c.islower() or c.isupper():
-                return Token.RES_CONTINUE
+                return RES_CONTINUE
             else:
                 self.e = char[3] - 1
-                return Token.RES_REDO
+                return RES_REDO
 
 
 
@@ -162,10 +179,10 @@ def PaserToken(source):
         c = char[0]
         if CurToken:
             res = CurToken.update(char)
-            if Token.RES_STOP == res:
+            if RES_STOP == res:
                 CurToken = None
 
-            elif Token.RES_REDO == res:
+            elif RES_REDO == res:
                 CurToken = None
                 return handle(CurToken, char)
 

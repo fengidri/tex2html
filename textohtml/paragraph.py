@@ -3,6 +3,9 @@
 #    time      :   2015-03-16 16:19:37
 #    email     :   fengidri@yeah.net
 #    version   :   1.0.1
+
+
+# 把 语法做生成 段落
 from nodes import Section, node_tree
 import logging
 
