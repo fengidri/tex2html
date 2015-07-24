@@ -4,39 +4,138 @@
 #    email     :   fengidri@yeah.net
 #    version   :   1.0.1
 import logging
-class Word( object ):
-    "词法对象"
-    TEX_CHAR = ['%','#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']
-    TEX_CONTROL_CHAR = ['#', '$', '%', '^', '&', '_', '{', '}', '~', '\\']
-    TEX_CONTROL_PUNC = [' ']
+logging.basicConfig(level = logging.INFO, format = '%(message)s')
 
 
+class Token(object):
     TYPE_CONTROL = 1  # 控制序列
-    TYPE_PUNC    = 2  # 特殊符号
     TYPE_TEXT    = 3  # 文字
-    TYPE_CPUNC   = 4  # 形如\# \$ \% \^ \& \_ \{ \} \~ \\
+    TYPE_TEXPUNC = 4  # 形如\# \$ \% \^ \& \_ \{ \} \~ \\
     TYPE_COMMENT = 5
-    TYPE_TYPING  = 6
 
-    def __init__(self, t, l, name, pos):
-        self.pos = pos
+    RES_CONTINUE = 1
+    RES_STOP     = 0
+    RES_REDO     = 2 # 对于传进入来的 char 要重新处理一次
 
-        self.len = l   # 长度
-        self.type = t   # 对应类型
-        self.nm = name
+    tokes = []
+    Source       = None
+    def __init__(self, char):
+        self.l = char[1]
+        self.c = char[2]
+        self.s = char[3]
+        self.e = None
+        self.tokes.append(self)
+
+    def position(self):
+        return (self.l, self.c)
+
+    def content(self):#
+        if self.e:
+            return Token.Source[self.s: self.e + 1]
+        else:
+            return Token.Source[self.s]
+
+    def update_end(self, char):# 这里最后一个char
+        self.e = char[3]
+
+    def update(self, char):
+        """
+            0: over
+            1. contiune
+        """
+        pass
+
+class Token_Text(Token):
+    Type = Token.TYPE_TEXT
+    def log(self):
+        logging.info("@%s: TEXT: %s", self.position(), self.content())
 
 
-    def name(self):
-        return self.nm
+class Token_TexPunc(Token):
+    Type = Token.TYPE_TEXPUNC
+    def __init__(self, char):
+        Token.__init__(self, char)
+        self.punc = char[0]
 
-    def showname(self):#
-        nm = self.nm
-        if nm == '\n': nm= '\\n'
-        if nm == ' ': nm = '\\space'
-        return nm
-    def show(self):
-        return "name:%s, line:%s column:%s"% (self.showname(),
-                self.pos[0], self.pos[1])
+    def log(self):
+        s = self.content().replace(' ', '\<space>').replace('\n', '\<cr>')
+        logging.info("@%s: TexPunc : %s", self.position(), s)
+
+    def update(self, char):
+        if self.punc == ' ':
+            if char[0] == ' ':
+                return Token.RES_CONTINUE
+            else:
+                self.e = char[3] - 1
+                return Token.RES_REDO
+
+        if self.punc == '\n':
+            if char[0] == '\n':
+                return Token.RES_CONTINUE
+            else:
+                self.e = char[3] - 1
+                return Token.RES_REDO
+
+        self.e = char[3] - 1
+        return Token.RES_REDO
+
+
+
+class Token_Comment(Token):
+    Type = Token.TYPE_COMMENT
+    def update(self, char):
+        if char[0] == '\n':
+            self.e = char[3]
+            return Token.RES_STOP
+        return Token.RES_CONTINUE
+
+    def log(self):
+        comment = self.content()
+        comment = comment.replace('\n', '\\n')
+        logging.info("@%s: Comment : %s", self.position(), comment)
+
+class Token_Control(Token):
+    Type = Token.TYPE_CONTROL
+    except_space = False
+
+    def log(self):
+        comment = self.content()
+        comment = comment.replace('\n', '\\n')
+        logging.info("@%s: Control : %s", self.position(), comment)
+
+    def update_end(self, char):
+        self.stop(char[3])
+
+    def update(self, char):
+        c = char[0]
+        if char[3] - self.s == 1:
+            if c in ['#', '$', '%', '^', '&', '_', '{', '}', '~', '\\']:
+                # 形如: \$ \#
+                self.e = char[3]
+                return Token.RES_STOP
+
+            elif not (c.islower()  or c.isupper()):
+                raise Exception("Control Token Error: @%d,%d" % (self.s[1], self.s[2]))
+
+            else:
+                return Token.RES_CONTINUE
+
+        if self.except_space:
+            if c == ' ' or c == '\r': # 形如 "\section    "
+                return Token.RES_CONTINUE
+            else:
+                return Token.RES_REDO
+        else:
+            if c == ' ':
+                self.e = char[3] - 1
+                self.except_space = True
+                return Token.RES_CONTINUE
+
+            if c.islower() or c.isupper():
+                return Token.RES_CONTINUE
+            else:
+                self.e = char[3] - 1
+                return Token.RES_REDO
 
 
 
@@ -50,125 +149,60 @@ class Source(object): # 对于souce 进行包装
     def getchar(self): # 得到当前的char
         for i, c in enumerate(self.source):
             self.col += 1
-            yield c, self.line, self.col, i
+            yield (c, self.line, self.col, i)
             if '\n' == c:
                 self.line += 1
                 self.col = 0
 
 
 
-class PostionCounter(object): # 计算当前的位置
-    def __init__(self, source, words):
-        self.line = 1
-        self.col = 0
-        self.source = source
-        self.col_start = 0
-        self.words = words
 
-    def update(self, char):
-        if char == '\n':
-            self.line += 1
-            self.col_start = self.source.pos
+def PaserToken(source):
+    def handle(CurToken, char):
+        c = char[0]
+        if CurToken:
+            res = CurToken.update(char)
+            if Token.RES_STOP == res:
+                CurToken = None
 
-    def get_pos(self):
-        col = self.source.pos - self.col_start
-        return (self.line, col, self.source.pos, self.words.end)
+            elif Token.RES_REDO == res:
+                CurToken = None
+                return handle(CurToken, char)
 
+        elif c in ['%','#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']:
+            CurToken = Token_TexPunc(char)
 
-def get_control(source, pos):
-    length = 1
+        elif c == '%':
+            CurToken = Token_Comment(char)
 
-    name = []
-    name.append(source.getchar())
+        elif c == '\\':
+            CurToken = Token_Control(char)
 
-    source.update()
-    tp = Word.TYPE_CONTROL
-
-    while source.getchar():
-        char = source.getchar()
-        if length == 1:
-            if char in Word.TEX_CONTROL_CHAR or char in Word.TEX_CONTROL_PUNC:
-                length += 1
-                name.append(char)
-                source.update()
-                tp = Word.TYPE_CPUNC
-                break
-        if char.islower() or char.isupper():
-            length+=1
-            name.append(char)
-            source.update()
-            continue
         else:
-            break
-            # 序列结束
-    name = ''.join(name)
+            Token_Text(char)
+        return CurToken
 
-    return Word(tp, length, name, pos)
-
-
+    Token.Source = source
+    CurToken = None
 
 
+    for char in Source(source).getchar():
+        CurToken = handle(CurToken, char)
+
+    if CurToken:
+        CurToken.update_end(char)
+
+    return Token.tokes
 
 
 
 
 
 
-def split(src): # 对于src 进行词法分解
-    logging.info('************ split ************')
-    source = Source(src)
-    words = Words(src)
-    poscounter = PostionCounter(source, words) # 统计当前的行号, 位置信息
-
-    text_pos = poscounter.get_pos()
-
-    while True:
-        char =  source.getchar()
-        if not char : break
-        # start
-
-        if char in Word.TEX_CHAR or char == '\\':
-            # 处理普通文本
-            if text_pos:
-                l = poscounter.get_pos()[2] - text_pos[2]
-                w = Word(Word.TYPE_TEXT,  l, 'text', text_pos)
-                words.append(w)
-                text_pos = None
-
-            if char in Word.TEX_CHAR:# 特殊字符
-
-                w = Word(Word.TYPE_PUNC, 1, char, poscounter.get_pos())
-                words.append(w)
-                poscounter.update(char)  # 更新行
-                source.update()
 
 
-            elif char == '\\': # 控制序列
-                w = get_control(source, poscounter.get_pos())
-                words.append(w)
 
 
-                # 处理结束的char 不是序列的, 再次进入循环
-                continue
-        else:
-            if text_pos == None:
-                text_pos = poscounter.get_pos()
-
-            poscounter.update(char)  # 更新行
-            source.update()
-    return words
-
-def show_word_details(words):
-    for w in words:
-
-        name = w.name()
-        if w.type == Word.TYPE_PUNC:
-            if name == '\n':
-                name = '\\n'
-            elif name == ' ':
-                name = 'space'
-
-        print "%s|%s,%s" % (name, w.pos[0], w.pos[1])
 
 class Words(object):# 对于进行词法分析的结果进行包装, 是语法分析中的依赖
     def __init__(self, source, start = 0, end = None, words = None):
@@ -321,5 +355,30 @@ class Words(object):# 对于进行词法分析的结果进行包装, 是语法�
         return self.end - self.start
 
 if __name__ == "__main__":
-    pass
+    import codecs
+    f = codecs.open('../index.mkiv', 'r','utf8')
+
+    for t in PaserToken(f.read()):
+        t.log()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
