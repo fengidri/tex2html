@@ -10,6 +10,8 @@
 
 import token
 
+TYPE_TREE = 10
+
 RES_CONTINUE = 1
 RES_STOP     = 0
 RES_REDO     = 2 # 对于传进入来的 char 要重新处理一次
@@ -20,6 +22,7 @@ RES_REDO     = 2 # 对于传进入来的 char 要重新处理一次
 \subsubsection { TEX }
 \sub
 """
+
 
 class Syntax(object):
     def __init__(self, tokens):
@@ -33,15 +36,6 @@ class Syntax(object):
         pos = self.pos
         self.pos += 1
         return self.tokens[pos]
-
-    def get_skip(self, name):
-        while True:
-            tok = self.get()
-            if not tok:
-                return None
-
-            if not tok.name  in name:
-                return tok
 
     def syntax(self, stop_name = None):
         # 从当前的位置(self.pos)开始对于输入的token 流进行语法解析
@@ -60,7 +54,7 @@ class Syntax(object):
 
             # tex 只要对于 control , texpunc 进行语法解析
             if tok.Type == token.TYPE_CONTROL:
-                self.pasert(tok)
+                self.paser(tok)
                 #tok.args, tok.opts = self.get_args_opts()
 
             syntax.append(tok)
@@ -70,10 +64,59 @@ class Syntax(object):
     def paser(self, tok):
         #处理 tok paser,
         # 理想的情况下, 要依赖于一些数据规则. 这里在比较简单的情况下进行处理
+
         if tok.name == '\def':
-            tok = self.get_skip([' ', '\n'])
-            if not tok:
+            ctrl = self.except_control()
+            if not ctrl:
                 raise Exception("Not Found Control after : %s" % tok.infostr())
+
+            group = self.except_group()
+            if not group:
+                raise Exception("Not Found group after : %s" % tok.infostr())
+            tok.ctrl = ctrl
+            tok.group = group
+            return tok
+
+        else:
+            args = []
+            opt = self.except_opts()
+            while True:
+                arg = self.except_group()
+                if arg:
+                    args.append(arg)
+                else:
+                    break
+
+            tok.args = args
+            tok.opts = opt
+            return tok
+
+        if tok.name == '\starttyping':
+            while True:
+                t = self.get()
+                if not t:
+                    raise Exception("Not Found \stoptyping after : %s" % tok.infostr())
+                if t.name == '\stoptyping':
+                    break
+            tok.stop = t
+            return tok
+
+        elif tok.name == '\startitemize':
+            sub = self.syntax('\stopitemize')
+            if not sub:
+                raise Exception("Not Found \stopitemize after : %s" % tok.infostr())
+            token.sub = sub
+            return token
+
+        elif tok.name == '\starttable':
+            sub = self.syntax('\stoptable')
+            if not sub:
+                raise Exception("Not Found \stoptable after : %s" % tok.infostr())
+            token.sub = sub
+            return token
+
+
+
 
 
 
@@ -85,18 +128,56 @@ class Syntax(object):
         while True:
             tok = self.get()
             if not tok:
-                raise Exception("Not found: %s for %s" % (stop_name,
-                    start_tok.infostr()))
+                return None
 
             sub.append(tok)
             if tok.name == stop_name:
                 return sub
 
     def except_group(self):
-        pass
+        while True:
+            tok = self.get()
+            if not tok:
+                return None
+
+            elif tok.name in [' ', '\n']:
+                continue
+
+            elif tok.name == '{':
+                return self.syntax('}')
+
+            else:
+                return None
 
     def except_control(self):
-        pass
+        while True:
+            tok = self.get()
+            if not tok:
+                return None
+
+            elif tok.name in [' ', '\n']:
+                continue
+
+            elif tok.Type == token.TYPE_CONTROL:
+                return tok
+
+            else:
+                return None
+
+    def except_opts(self):
+        while True:
+            tok = self.get()
+            if not tok:
+                return None
+
+            elif tok.name in [' ', '\n']:
+                continue
+
+            elif tok.name == '[':
+                return self.find_plain(tok, '}')
+
+            else:
+                return None
 
 
     def get_args_opts(self):
@@ -147,7 +228,6 @@ class Syntax(object):
 
 
 
-def syntactic(tokens):
 
 
 
@@ -156,20 +236,28 @@ if __name__ == "__main__":
     import codecs
     f = codecs.open('../index.mkiv', 'r','utf8')
 
-    syn = syntactic(token.PaserToken(f.read()))
+    syn = Syntax(token.PaserToken(f.read()))
 
-    for tok in syn:
-        if tok.Type == token.TYPE_CONTROL:
-            print tok.name
-            for arg in tok.args:
-                for a in arg:
-                    print '  @:', a.infostr()
-                print ''
 
-            for a in tok.opts:
-                print '+:', a.infostr()
+    for tok in syn.syntax():
+        print tok.infostr()
+        if hasattr(tok, 'group'):
+            for t in tok.group:
+                print '    group', t.infostr()
 
-            print '--------------------'
+        if hasattr(tok, 'args'):
+            for t in tok.args:
+                print '    args', t.infostr()
+        #if tok.Type == token.TYPE_CONTROL:
+        #    print tok.name
+        #    for arg in tok.args:
+        #        for a in arg:
+        #            print '  @:', a.infostr()
+        #        print ''
 
-    pass
+        #    for a in tok.opts:
+        #        print '+:', a.infostr()
+
+        #    print '--------------------'
+
 
