@@ -20,6 +20,7 @@ class Token(object):
 
     tokes = []
     Source       = None
+    name = ''
     def __init__(self, char):
         self.l = char[1]
         self.c = char[2]
@@ -46,37 +47,30 @@ class Token(object):
         """
         pass
 
-    def name(self):
-        return ''
+    def infostr(self):
+        s = self.name.replace(' ', '\<space>').replace('\n', '\<cr>')
+        return "%s@%s" % (self.position(), s)
 
 class Token_Text(Token):
     Type = TYPE_TEXT
-    def log(self):
-        logging.info("@%s: TEXT: %s", self.position(), self.content())
-
-    def name(self):
-        return 'text'
+    name = 'Text'
 
 
 class Token_TexPunc(Token):
     Type = TYPE_TEXPUNC
     def __init__(self, char):
         Token.__init__(self, char)
-        self.punc = char[0]
-
-    def log(self):
-        s = self.content().replace(' ', '\<space>').replace('\n', '\<cr>')
-        logging.info("@%s: TexPunc : %s", self.position(), s)
+        self.name = char[0]
 
     def update(self, char):
-        if self.punc == ' ':
+        if self.name == ' ':
             if char[0] == ' ':
                 return RES_CONTINUE
             else:
                 self.e = char[3] - 1
                 return RES_REDO
 
-        if self.punc == '\n':
+        if self.name == '\n':
             if char[0] == '\n':
                 return RES_CONTINUE
             else:
@@ -86,23 +80,17 @@ class Token_TexPunc(Token):
         self.e = char[3] - 1
         return RES_REDO
 
-    def name(self):
-        return self.punc
 
 
 
 class Token_Comment(Token):
     Type = TYPE_COMMENT
+    name = 'comment'
     def update(self, char):
         if char[0] == '\n':
             self.e = char[3]
             return RES_STOP
         return RES_CONTINUE
-
-    def log(self):
-        comment = self.content()
-        comment = comment.replace('\n', '\\n')
-        logging.info("@%s: Comment : %s", self.position(), comment)
 
     def name(self):
         return 'comment'
@@ -111,13 +99,9 @@ class Token_Control(Token):
     Type = TYPE_CONTROL
     except_space = False
 
+    @property
     def name(self):
         return self.content()
-
-    def log(self):
-        comment = self.content()
-        comment = comment.replace('\n', '\\n')
-        logging.info("@%s: Control : %s", self.position(), comment)
 
     def update_end(self, char):
         self.stop(char[3])
