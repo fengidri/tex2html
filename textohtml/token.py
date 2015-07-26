@@ -3,14 +3,19 @@
 #    time      :   2015-03-16 09:13:29
 #    email     :   fengidri@yeah.net
 #    version   :   1.0.1
+
+
+# 注意完成token 解析后可以由于注释的问题, 连续的换行不能连接起来
 import logging
 logging.basicConfig(level = logging.INFO, format = '%(message)s')
 
 TYPE_CONTROL = 1  # 控制序列
-TYPE_TEXT    = 3  # 文字
+TYPE_TEXT_CN    = 3  # 文字
+TYPE_TEXT_EN    = 7  # 文字
 TYPE_TEXPUNC = 4
 TYPE_COMMENT = 5
 TYPE_CONPUNC = 6# 形如\# \$ \% \^ \& \_ \{ \} \~ \\
+TYPE_TEXT_PUNC = 8
 
 RES_CONTINUE = 1
 RES_STOP     = 0
@@ -37,8 +42,6 @@ class Token(object):
         else:
             return Token.Source[self.s]
 
-    def update_end(self, char):# 这里最后一个char
-        self.e = char[3]
 
     def update(self, char):
         """
@@ -49,11 +52,57 @@ class Token(object):
 
     def infostr(self):
         s = self.name.replace(' ', '\<space>').replace('\n', '\<cr>')
-        return "%s@%s" % (self.position(), s)
+        return "%s @ %s" % (self.position(), s)
 
-class Token_Text(Token):
-    Type = TYPE_TEXT
-    name = 'Text'
+class Token_TEXT_CN(Token):
+    Type = TYPE_TEXT_CN
+    def __init__(self, char):
+        Token.__init__(self, char)
+        self.name = char[0]
+
+    def update(self, char):
+        if char[0] == ' ':
+            return RES_CONTINUE
+        return RES_REDO
+
+
+class Token_TEXT_EN(Token):
+    Type = TYPE_TEXT_EN
+    stop  = False
+    def update(self, char):
+        c = char[0]
+
+        if self.stop: # 吃掉英语 word 后面的空间
+            if c == ' ':
+                return RES_CONTINUE
+            return RES_REDO
+        else:
+            if c.islower() or c.isupper() or c.isdigit():
+                return RES_CONTINUE
+            else:
+                self.e = char[3] - 1
+                self.name = self.content()
+                self.stop = True
+                if c == ' ':
+                    return RES_CONTINUE
+                return RES_REDO
+
+class Token_TEXT_PUNC(Token): # 一般行文中使用的标点符号
+    Type = TYPE_TEXT_PUNC
+    def __init__(self, char):
+        Token.__init__(self, char)
+        self.name = char[0]
+
+    def update(self, char):
+        if char[0] == ' ':
+            return RES_CONTINUE
+        return RES_REDO
+
+
+
+
+
+
 
 
 class Token_TexPunc(Token):
@@ -103,8 +152,6 @@ class Token_Control(Token):
     def name(self):
         return self.content()
 
-    def update_end(self, char):
-        self.stop(char[3])
 
     def update(self, char):
         c = char[0]
@@ -179,8 +226,14 @@ def PaserToken(source):
         elif c == '\\':
             CurToken = Token_Control(char)
 
+        elif ord(c) > 255: # not english
+            CurToken = Token_TEXT_CN(char)
+
+        elif c.islower() or c.isupper() or c.isdigit():
+            CurToken = Token_TEXT_EN(char)
+
         else:
-            Token_Text(char)
+            CurToken = Token_TEXT_PUNC(char)
         return CurToken
 
     Token.Source = source
@@ -191,7 +244,13 @@ def PaserToken(source):
         CurToken = handle(CurToken, char)
 
     if CurToken:
-        CurToken.update_end(char)
+        # 输入流已经结束, 处理最后一个 token
+
+        endchar = '\n'
+        if CurToken.Type == TYPE_TEXPUNC:
+            endchar = ' '
+
+        CurToken.update(char)
 
     return Token.tokes
 
@@ -201,7 +260,7 @@ if __name__ == "__main__":
     f = codecs.open('../index.mkiv', 'r','utf8')
 
     for t in PaserToken(f.read()):
-        t.log()
+       print  t.infostr()
 
 
 
