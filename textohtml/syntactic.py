@@ -102,13 +102,15 @@ class Syntax(object):
         tok.opts = opt
 
         if tok.name == '\starttyping':
+            tok.plain_start = self.get()
             while True:
+
                 t = self.get()
                 if not t:
                     raise Exception("Not Found \stoptyping after : %s" % tok.infostr())
                 if t.name == '\stoptyping':
+                    tok.plain_stop = t
                     break
-            tok.token = t
 
         elif tok.name == '\startitemize':
             sub = self.syntax('\stopitemize')

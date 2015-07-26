@@ -9,19 +9,22 @@
 import logging
 logging.basicConfig(level = logging.INFO, format = '%(message)s')
 
-TYPE_CONTROL = 1  # 控制序列
-TYPE_TEXT_CN    = 3  # 文字
-TYPE_TEXT_EN    = 7  # 文字
-TYPE_TEXPUNC = 4
-TYPE_COMMENT = 5
-TYPE_CONPUNC = 6# 形如\# \$ \% \^ \& \_ \{ \} \~ \\
-TYPE_TEXT_PUNC = 8
+TYPE_CONTROL   = 1  # 控制序列
+TYPE_TEXT_CN   = 3  # 文字
+TYPE_TEXT_EN   = 7  # 文字
+TYPE_TEXT_PUNC = 8  # , . ! "
+TYPE_TEXPUNC   = 4  # # $ %
+TYPE_CONPUNC   = 6  # 形如\# \$ \% \^ \& \_ \{ \} \~ \\
+TYPE_COMMENT   = 5
 
 RES_CONTINUE = 1
 RES_STOP     = 0
 RES_REDO     = 2 # 对于传进入来的 char 要重新处理一次
 
+
+
 class Token(object):
+    WRITE_TEXT_TYPE = 0
 
     tokes = []
     Source       = None
@@ -64,6 +67,13 @@ class Token_TEXT_CN(Token):
         Token.__init__(self, char)
         self.name = char[0]
 
+    def write(self, fd):
+        if Token.WRITE_TEXT_TYPE == TYPE_TEXT_EN:
+            fd.write(' ')
+
+        fd.write(self.name)
+        Token.WRITE_TEXT_TYPE = TYPE_TEXT_CN
+
     def update(self, char):
         if char[0] == ' ':
             return RES_CONTINUE
@@ -73,6 +83,12 @@ class Token_TEXT_CN(Token):
 class Token_TEXT_EN(Token):
     Type = TYPE_TEXT_EN
     stop  = False
+
+    def write(self, fd):
+        fd.write(' ')
+        fd.write(self.name)
+        Token.WRITE_TEXT_TYPE = TYPE_TEXT_EN
+
     def update(self, char):
         c = char[0]
 
@@ -101,6 +117,9 @@ class Token_TEXT_PUNC(Token): # 一般行文中使用的标点符号
         if char[0] == ' ':
             return RES_CONTINUE
         return RES_REDO
+
+    def write(self, fd):
+        fd.write(self.name)
 
 
 
@@ -133,6 +152,9 @@ class Token_TexPunc(Token):
         self.e = char[3] - 1
         return RES_REDO
 
+    def write(self, fd):
+        pass
+
 
 
 
@@ -152,6 +174,16 @@ class Token_Control(Token):
     @property
     def name(self):
         return self.content()
+
+    def write(self, fd):
+        if self.Type == TYPE_CONPUNC:
+            fd.write(self.name[1])
+
+        if self.name == '\starttyping': #TODO 在这里处理可能不是太好
+            i = self.plain_start.s
+            while i < self.plain_stop.s:
+                fd.write(Token.Source[i])
+                i += 1
 
 
     def update(self, char):
