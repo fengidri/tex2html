@@ -54,6 +54,10 @@ class Token(object):
         s = self.name.replace(' ', '\<space>').replace('\n', '\<cr>')
         return "@%s:%s" % (self.position(), s)
 
+    @property
+    def len(self):
+        return len(self.content())
+
 class Token_TEXT_CN(Token):
     Type = TYPE_TEXT_CN
     def __init__(self, char):
@@ -141,9 +145,6 @@ class Token_Comment(Token):
             return RES_STOP
         return RES_CONTINUE
 
-    def name(self):
-        return 'comment'
-
 class Token_Control(Token):
     Type = TYPE_CONTROL
     except_space = False
@@ -217,7 +218,7 @@ def PaserToken(source):
                 CurToken = None
                 return handle(CurToken, char)
 
-        elif c in ['%','#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']:
+        elif c in ['#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']:
             CurToken = Token_TexPunc(char)
 
         elif c == '%':

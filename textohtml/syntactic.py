@@ -34,6 +34,7 @@ class Syntax(object):
         #    2. 遇到的 stop_name
         # 返回值:
         #  list: 这中间的每一个元素都是 token
+
         syntax = []
         while True:
             tok = self.get()
@@ -113,7 +114,7 @@ class Syntax(object):
             sub = self.syntax('\stopitemize')
             if not sub:
                 raise Exception("Not Found \stopitemize after : %s" % tok.infostr())
-            print '@@@@@@@@@@@@@@@@22'
+            sub.pop()
             tok.syntax = sub # syn_list
 
         elif tok.name == '\starttable':
@@ -206,16 +207,13 @@ def debug(syntax, level  = 0):
     for tok in syntax:
         print '%s%s' % ('  ' * level, tok.infostr())
         if tok.Type == token.TYPE_CONTROL:
-            print "------ start ------", len(tok.args)
             for arg in tok.args:
                 debug(arg, level + 1)
                 print ''
 
             if hasattr(tok , 'syntax'):
-                print '###################'
                 debug(tok.syntax, level + 1)
 
-            print "------ stop ------"
 
 
 
