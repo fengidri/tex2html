@@ -21,6 +21,7 @@ RES_CONTINUE = 1
 RES_STOP     = 0
 RES_REDO     = 2 # 对于传进入来的 char 要重新处理一次
 
+TEX_PUNC = ['#', '$', '%', '^', '&', '_', '{', '}', '~', '\\']
 
 
 class Token(object):
@@ -92,12 +93,13 @@ class Token_TEXT_EN(Token):
     def update(self, char):
         c = char[0]
 
-        if self.stop: # 吃掉英语 word 后面的空间
+        if self.stop: # 吃掉英语 word 后面的空格
             if c == ' ':
                 return RES_CONTINUE
             return RES_REDO
         else:
-            if c.islower() or c.isupper() or c.isdigit():
+            #if c.islower() or c.isupper() or c.isdigit():
+            if not c in [' ', '\n'] and not c in TEX_PUNC:
                 return RES_CONTINUE
             else:
                 self.e = char[3] - 1
@@ -189,7 +191,7 @@ class Token_Control(Token):
     def update(self, char):
         c = char[0]
         if char[3] - self.s == 1:
-            if c in ['#', '$', '%', '^', '&', '_', '{', '}', '~', '\\']:
+            if c in TEX_PUNC:
                 # 形如: \$ \#
                 self.e = char[3]
                 self.Type = TYPE_CONPUNC
