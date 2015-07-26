@@ -52,7 +52,7 @@ class Token(object):
 
     def infostr(self):
         s = self.name.replace(' ', '\<space>').replace('\n', '\<cr>')
-        return "%s @ %s" % (self.position(), s)
+        return "@%s:%s" % (self.position(), s)
 
 class Token_TEXT_CN(Token):
     Type = TYPE_TEXT_CN

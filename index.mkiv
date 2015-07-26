@@ -20,4 +20,22 @@
 {https://docs.trafficserver.apache.org/en/latest/arch/cache/cache-arch.en.html}
 
 
+\startitemize
+\item proxy.config.cache.enable_read_while_writer 设置为1 开启
+0 关闭
+\item \bgfill(proxy.config.http.background_fill_active_timeout
+proxy.config.http.background_fill_completed_threshold)
+特性对于每一个请求都应该是起作用的.
+
+
+\item proxy.config.cache.max_doc_size 存对象的 disconnect.
+\stopitemize
+
+\starttyping
+CONFIG proxy.config.cache.read_while_writer.max_retries INT 10
+
+CONFIG proxy.config.cache.read_while_writer.delay INT 50
+\stoptyping
+
+
 xxx
