@@ -43,6 +43,12 @@ class Syntax(object):
             if not tok.name  in name:
                 return tok
 
+    def except_group(self):
+        pass
+
+    def except_control(self):
+        pass
+
     def syntax(self, stop_name = None):
         # 从当前的位置(self.pos)开始对于输入的token 流进行语法解析
         # 有两种情况会退出解析
@@ -92,11 +98,6 @@ class Syntax(object):
             if tok.name == stop_name:
                 return sub
 
-    def except_group(self):
-        pass
-
-    def except_control(self):
-        pass
 
 
     def get_args_opts(self):
