@@ -19,7 +19,7 @@ html_convert = {
         "\startitemize":  ("\n<ul>\n",    CVT_SYNTAX,  '\n</ul>\n'),
         "\starttyping":   ("\n<pre>",     CVT_TYPING,  '</pre>\n'),
         "\item":          ("\n<li>"),
-        "\goto":          ("<a href=",  CVT_ARG2,  '>', CVT_ARG2, "</a>"),
+        "\goto":          ("<a href=",  CVT_ARG2,  '>', CVT_ARG1, "</a>"),
         "\img":           ("<img src=", CVT_ARG1,  ' ></img>'),
         "\starttable":    ("<table>\n", CVT_SYNTAX,    '\n</table>'),
         "\NC"   :         ('<tr><td>'),
@@ -34,6 +34,7 @@ class Convert(object):
         self.fd = fd
         self.cvt = cvt # 转换表
         self.par_write_type = 0
+        self.index_number = [0, 0, 0]
 
         self.handle_map = {
                 token.TYPE_TEXT_PUNC: self.handle_token_text_punc,
@@ -65,6 +66,27 @@ class Convert(object):
     def handle_token_texpunc(self, tok):
         pass
 
+    def add_index_number(self, tok):
+        if tok.name == '\section':
+            level = 0
+        elif tok.name == '\subsection':
+            level = 1
+        elif tok.name == '\subsubsection':
+            level = 2
+        else:
+            return
+
+        for i in range(level + 1, len(self.index_number)):
+            self.index_number[i]  = 0
+
+        self.index_number[level] += 1
+        for i in self.index_number[0: level + 1]:
+            self.fd.write(str(i))
+            self.fd.write('.')
+
+        self.fd.write(' ')
+
+
     def handle_token_control(self, tok):
         sq = self.cvt.get(tok.name)
         if not sq:
@@ -78,6 +100,7 @@ class Convert(object):
                 if len(tok.args) <= 0:
                     raise Exception("%s: except 1 args" % tok.infostr())
                 else:
+                    self.add_index_number(tok)
                     self.handle_syntax(tok.args[0])
 
             elif CVT_ARG2 == s:
@@ -119,6 +142,7 @@ class Convert(object):
                 self.par_write_type = 0
                 for i in range(start, length):
                     self.handle_token(par[i])
+                self.par_write_type = 0
 
 
     def convert(self, pars):

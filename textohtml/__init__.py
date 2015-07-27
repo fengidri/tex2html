@@ -13,20 +13,19 @@ import codecs
 #logging.basicConfig(level = logging.DEBUG, format = '%(message)s')
 logging.basicConfig(level = logging.ERROR, format = '%(message)s')
 
-from words import split
-from nodes import node_tree
-from pre import prehandler
-from paragraph import SplitParagraph
+import token
+import syntactic
+import paragraph
+import convert
 
-def handle(f=None, buf=None):
-    if f:
-        buf = codecs.open(f, 'r','utf8').read()
+def handle(out, cvt, buf):
 
-    if not buf:
-        return
 
-    ws = prehandler(split(buf))
-    return SplitParagraph(ws, 0)
+    tokens = token.PaserToken(buf)
+    syn_list = syntactic.Syntax(tokens).syntax()
+    pars = paragraph.paragraph(syn_list)
+    ct = convert.Convert(out, cvt)
+    ct.convert(pars)
 
 
 def markdown(path=None, buf=None):
@@ -36,12 +35,9 @@ def markdown(path=None, buf=None):
 
     return ws.md()
 
-def html(path=None, buf=None):
-    ws = handle(path, buf)
-    if not ws:
-        return ''
-
-    return ws.html()
+def html(out,  path):
+    buf = codecs.open(path, 'r','utf8').read()
+    ws = handle(out, convert.html_convert, buf)
 
 def texstohtml(src, o):
     import traceback

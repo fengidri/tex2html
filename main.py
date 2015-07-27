@@ -78,11 +78,10 @@ def handle():
         f.write('\n</style>\n')
 
     if Config.type == "markdown":
-        res = textohtml.markdown(path = Config.input)
+        textohtml.markdown(path = Config.input)
     else:
-        res = textohtml.html(path = Config.input)
+        textohtml.html(f, path = Config.input)
 
-    f.write(res)
     f.close()
 
 if __name__ == "__main__":

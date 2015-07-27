@@ -44,26 +44,24 @@ class Syntax(object):
             if tok.Type == token.TYPE_COMMENT:
                 continue
 
+            if tok.Type == token.TYPE_TEXPUNC:
+                if tok.name == '{':
+                    tok.syntax = self.syntax('}')
+                    tok.syntax.pop()
+
+
             # tex 只要对于 control , texpunc 进行语法解析
-            if tok.Type == token.TYPE_CONTROL:
+            elif tok.Type == token.TYPE_CONTROL:
                 group = self.defs.get(tok.name) # def 定义的新的控制序列
                 if group:
                     syntax.extend(group)
                     continue
-
-                #if tok.name == '\section':
-                #    import pdb
-                #    pdb.set_trace()
-
                 tok = self.paser(tok)
-                if not tok:
-                    continue
-                #tok.args, tok.opts = self.get_args_opts()
 
-            syntax.append(tok)
-
-            if stop_name and tok.name == stop_name:
-                break
+            if tok:
+                syntax.append(tok)
+                if stop_name and tok.name == stop_name:
+                    break
 
         return syntax
 

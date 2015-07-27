@@ -208,6 +208,8 @@ class Source(object): # 对于souce 进行包装
         self.line  = 1
         self.col = 0
         self.source = source
+        self.pos = 0
+        self.length = len(source)
 
     def getchar(self): # 得到当前的char
         for i, c in enumerate(self.source):
@@ -216,6 +218,29 @@ class Source(object): # 对于souce 进行包装
             if '\n' == c:
                 self.line += 1
                 self.col = 0
+
+    def lines(self):
+        def char():
+            while True:
+                if self.pos >= self.length:
+                    c = self.source[self.pos]
+                else:
+                    c = '\n'
+
+                self.pos += 1
+                self.col += 1
+
+                yield (c, self.line, self.col, self.pos)
+
+                if c == '\n':
+                    break
+
+        while self.pos < self.col:
+            yield char()
+            self.line += 1
+
+
+
 
 
 
