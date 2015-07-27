@@ -66,21 +66,29 @@ class Convert(object):
         else:
             tok.write(self.fd)
 
+    def handle_par(self, par):
+        length = len(par)
+        start = 0
+        while start < length:
+            if not par[start].name in [' ', '\n', '\\ ']:
+                break
+
+        if start >= length:
+            return
+
+        for o in self.cvt.get('@par'):
+            if isinstance(o, basestring):
+                self.fd.write(o)
+
+            if o == CVT_PAR:
+                for i in range(start, length):
+                    self.handle_convert(par[i])
+
+
     def convert(self, pars):
         for p in pars:
             if isinstance(p, list): # is par
-                for o in self.cvt.get('@par'):
-                    if isinstance(o, basestring):
-                        self.fd.write(o)
-
-                    if o == CVT_PAR:
-                        start = True
-                        for tok in p:
-                            if start and tok.name in [' ', '\n', '\\ ']:
-                                continue
-                            else:
-                                start = False
-                            self.handle_convert(tok)
+                self.handle_par(p)
 
             else:
                 self.handle_convert(p)
