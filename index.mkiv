@@ -1,3 +1,4 @@
+%除了作为一个 HTTP PROXY, \ats 也是一个 HTTP 缓存.
 
 \def\ats{Apache Traffic}
 \def\cachekey{
@@ -9,7 +10,7 @@
 \section{介绍}
 %除了作为一个 HTTP PROXY, \ats 也是一个 HTTP 缓存.
 
-\ats 能够缓存#任何字节这样的流(包括 HTTP 头)在缓为一个缓存对象.
+\ats 能      够缓存#任何字节这样的流(包括 HTTP 头)在缓为一个缓存对象.
 每一个对象通过一个全球唯一 的 \cachekey 进行标记.
 
 那么真实的layout 如下:
@@ -20,4 +21,22 @@
 {https://docs.trafficserver.apache.org/en/latest/arch/cache/cache-arch.en.html}
 
 
+\startitemize
+\item proxy.config.cache.enable_read_while_writer 设置为1 开启
+0 关闭
+\item (proxy.config.http.background_fill_active_timeout
+proxy.config.http.background_fill_completed_threshold)
+特性对于每一个请求都应该是起作用的.
 
+
+\item proxy.config.cache.max_doc_size 存对象的 disconnect.
+\stopitemize
+
+\starttyping
+CONFIG proxy.config.cache.read_while_writer.max_retries INT 10
+
+CONFIG proxy.config.cache.read_while_writer.delay INT 50
+\stoptyping
+
+
+xxx
