@@ -85,6 +85,15 @@ class Token_TEXT_EN(Token):
     Type = TYPE_TEXT_EN
     stop  = False
 
+    @staticmethod
+    def is_en(c):
+        if c in [' ', '\n']:
+            return False
+
+        if c in TEX_PUNC:
+            return False
+        return True
+
     def write(self, fd):
         fd.write(' ')
         fd.write(self.name)
@@ -99,7 +108,7 @@ class Token_TEXT_EN(Token):
             return RES_REDO
         else:
             #if c.islower() or c.isupper() or c.isdigit():
-            if not c in [' ', '\n'] and not c in TEX_PUNC:
+            if Token_TEXT_EN.is_en(c):
                 return RES_CONTINUE
             else:
                 self.e = char[3] - 1
@@ -251,21 +260,22 @@ def PaserToken(source):
             elif RES_REDO == res:
                 CurToken = None
                 return handle(CurToken, char)
+            return CurToken
 
-        elif c in ['#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']:
-            CurToken = Token_TexPunc(char)
-
-        elif c == '%':
+        if c == '%':
             CurToken = Token_Comment(char)
 
         elif c == '\\':
             CurToken = Token_Control(char)
 
+        elif c in ['#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']:
+            CurToken = Token_TexPunc(char)
+
+        elif Token_TEXT_EN.is_en(c):
+            CurToken = Token_TEXT_EN(char)
+
         elif ord(c) > 255: # not english
             CurToken = Token_TEXT_CN(char)
-
-        elif c.islower() or c.isupper() or c.isdigit():
-            CurToken = Token_TEXT_EN(char)
 
         else:
             CurToken = Token_TEXT_PUNC(char)
