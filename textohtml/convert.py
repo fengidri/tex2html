@@ -72,8 +72,9 @@ class Convert(object):
         while start < length:
             if not par[start].name in [' ', '\n', '\\ ']:
                 break
+            start += 1
 
-        if start >= length:
+        if start >= length: # 处理段落空的情况
             return
 
         for o in self.cvt.get('@par'):
