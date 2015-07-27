@@ -200,8 +200,6 @@ class Token_Control(Token):
                 self.e = char[3] - 1
                 return RES_REDO
 
-
-
 class Source(object): # 对于souce 进行包装
     def __init__(self, source):
         self.pos = 0
@@ -222,7 +220,7 @@ class Source(object): # 对于souce 进行包装
     def lines(self):
         def char():
             while True:
-                if self.pos >= self.length:
+                if self.pos < self.length:
                     c = self.source[self.pos]
                 else:
                     c = '\n'
@@ -235,14 +233,9 @@ class Source(object): # 对于souce 进行包装
                 if c == '\n':
                     break
 
-        while self.pos < self.col:
+        while self.pos < self.length:
             yield char()
             self.line += 1
-
-
-
-
-
 
 
 def PaserToken(source):
