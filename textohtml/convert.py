@@ -33,38 +33,72 @@ class Convert(object):
     def __init__(self, fd, cvt):
         self.fd = fd
         self.cvt = cvt # 转换表
+        self.par_write_type = 0
 
+        self.handle_map = {
+                token.TYPE_TEXT_PUNC: self.handle_token_text_punc,
+                token.TYPE_TEXT_CN: self.handle_token_text_cn,
+                token.TYPE_TEXT_EN: self.handle_token_text_en,
+                token.TYPE_CONPUNC: self.handle_token_conpunc,
+                token.TYPE_CONTROL: self.handle_token_control,
+                token.TYPE_TEXPUNC: self.handle_token_texpunc,
+                }
 
-    def handle_convert(self, tok):
-        if tok.Type ==  token.TYPE_CONTROL:
-            sq = self.cvt.get(tok.name)
-            if not sq:
-                raise Exception("%s: Dont Know" % tok.infostr())
-            for s in sq:
-                if isinstance(s, basestring):
-                    self.fd.write(s)
+    def handle_token_text_en(self, tok):
+        self.fd.write(' ')
+        self.fd.write(tok.name)
+        self.par_write_type = token.TYPE_TEXT_EN
 
-                elif CVT_ARG1 == s:
-                    if len(tok.args) <= 0:
-                        raise Exception("%s: except 1 args" % tok.infostr())
-                    else:
-                        for _tok in tok.args[0]:
-                            self.handle_convert(_tok)
+    def handle_token_text_cn(self, tok):
+        if self.par_write_type == TYPE_TEXT_EN:
+            self.fd.write(' ')
 
-                elif CVT_ARG2 == s:
-                    if len(tok.args) <= 1:
-                        raise Exception("%s: except 2 args" % tok.infostr())
-                    else:
-                        for _tok in tok.args[1]:
-                            self.handle_convert(_tok)
+        self.fd.write(token.name)
+        self.par_write_type = token.TYPE_TEXT_CN
 
-                elif CVT_SYNTAX == s:
-                        for _tok in tok.syntax:
-                            self.handle_convert(_tok)
-                elif CVT_TYPING == s:
-                    tok.write(self.fd)
-        else:
-            tok.write(self.fd)
+    def handle_token_text_punc(self, tok):
+        self.fd.write(tok.name)
+
+    def handle_token_conpunc(self, tok):
+        self.fd.write(tok.name[1])
+
+    def handle_token_texpunc(self, tok):
+        pass
+
+    def handle_token_control(self, tok):
+        sq = self.cvt.get(tok.name)
+        if not sq:
+            raise Exception("%s: Dont Know" % tok.infostr())
+
+        for s in sq:
+            if isinstance(s, basestring):
+                self.fd.write(s)
+
+            elif CVT_ARG1 == s:
+                if len(tok.args) <= 0:
+                    raise Exception("%s: except 1 args" % tok.infostr())
+                else:
+                    self.handle_syntax(tok.args[0])
+
+            elif CVT_ARG2 == s:
+                if len(tok.args) <= 1:
+                    raise Exception("%s: except 2 args" % tok.infostr())
+                else:
+                    self.handle_syntax(tok.args[1])
+
+            elif CVT_SYNTAX == s:
+                    self.handle_syntax(tok.syntax)
+
+            elif CVT_TYPING == s:
+                for c in tok.plain():
+                    self.fd.write(c)
+
+    def handle_syntax(self, syn_list):
+        for tok in syn_list:
+            self.handle_token(tok)
+
+    def handle_token(self, tok):
+        self.handle_map[tok.Type](tok)
 
     def handle_par(self, par):
         length = len(par)
@@ -82,17 +116,17 @@ class Convert(object):
                 self.fd.write(o)
 
             if o == CVT_PAR:
+                self.par_write_type = 0
                 for i in range(start, length):
-                    self.handle_convert(par[i])
+                    self.handle_token(par[i])
 
 
     def convert(self, pars):
         for p in pars:
             if isinstance(p, list): # is par
                 self.handle_par(p)
-
             else:
-                self.handle_convert(p)
+                self.handle_token(p)
 
 
 

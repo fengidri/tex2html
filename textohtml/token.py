@@ -68,13 +68,6 @@ class Token_TEXT_CN(Token):
         Token.__init__(self, char)
         self.name = char[0]
 
-    def write(self, fd):
-        if Token.WRITE_TEXT_TYPE == TYPE_TEXT_EN:
-            fd.write(' ')
-
-        fd.write(self.name)
-        Token.WRITE_TEXT_TYPE = TYPE_TEXT_CN
-
     def update(self, char):
         if char[0] == ' ':
             return RES_CONTINUE
@@ -93,11 +86,6 @@ class Token_TEXT_EN(Token):
         if c in TEX_PUNC:
             return False
         return True
-
-    def write(self, fd):
-        fd.write(' ')
-        fd.write(self.name)
-        Token.WRITE_TEXT_TYPE = TYPE_TEXT_EN
 
     def update(self, char):
         c = char[0]
@@ -129,14 +117,6 @@ class Token_TEXT_PUNC(Token): # 一般行文中使用的标点符号
             return RES_CONTINUE
         return RES_REDO
 
-    def write(self, fd):
-        fd.write(self.name)
-
-
-
-
-
-
 
 
 class Token_TexPunc(Token):
@@ -163,12 +143,6 @@ class Token_TexPunc(Token):
         self.e = char[3] - 1
         return RES_REDO
 
-    def write(self, fd):
-        pass
-
-
-
-
 class Token_Comment(Token):
     Type = TYPE_COMMENT
     name = 'comment'
@@ -186,15 +160,12 @@ class Token_Control(Token):
     def name(self):
         return self.content()
 
-    def write(self, fd):
-        if self.Type == TYPE_CONPUNC:
-            fd.write(self.name[1])
-
-        if self.name == '\starttyping': #TODO 在这里处理可能不是太好
+    def plain(self):
             i = self.plain_start.s
             while i < self.plain_stop.s:
-                fd.write(Token.Source[i])
+                yield Token.Source[i]
                 i += 1
+
 
 
     def update(self, char):
