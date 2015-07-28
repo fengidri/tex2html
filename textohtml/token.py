@@ -225,21 +225,50 @@ class Source(object): # 对于souce 进行包装
                 else:
                     c = '\n'
 
+                if c == '\n':
+                    break
+
                 self.pos += 1
                 self.col += 1
 
                 yield (c, self.line, self.col, self.pos)
 
-                if c == '\n':
-                    break
-
         while self.pos < self.length:
             yield char()
             self.line += 1
 
+class TokenPaser(object):
+    def __init__(self, source):
+        self.src = Source(source)
 
-def PaserToken(source):
-    def handle(CurToken, char):
+        for line in self.src.lines():
+            self.handle_line(line)
+
+    def handle_line(self, line):
+        """
+            N: NewLine
+            S: Skip Space
+
+        """
+        status = 'N'
+        length = 0
+
+        for char in line:
+            length += 1
+            if status == 'S' and char[0] == ' ':
+                continue
+
+            self.handle_char(char)
+
+            if status == 'R':
+                status = self.handle_char(char)
+                assert status != 'R'
+
+        if length == 0:#\par
+            pass
+
+
+    def handle_char(self, char):
         c = char[0]
         if CurToken:
             res = CurToken.update(char)
@@ -257,7 +286,7 @@ def PaserToken(source):
         elif c == '\\':
             CurToken = Token_Control(char)
 
-        elif c in ['#','$','&','{','}', '^', '_', '~', '[', ']', ' ', '\n']:
+        elif c in ['#','$','&','{','}', '^', '_', '~', '[', ']', ' ']:
             CurToken = Token_TexPunc(char)
 
         elif Token_TEXT_EN.is_en(c):
@@ -270,23 +299,8 @@ def PaserToken(source):
             CurToken = Token_TEXT_PUNC(char)
         return CurToken
 
-    Token.Source = source
-    CurToken = None
 
 
-    for char in Source(source).getchar():
-        CurToken = handle(CurToken, char)
-
-    if CurToken:
-        # 输入流已经结束, 处理最后一个 token
-
-        endchar = '\n'
-        if CurToken.Type == TYPE_TEXPUNC:
-            endchar = ' '
-
-        CurToken.update(char)
-
-    return Token.tokes
 
 
 if __name__ == "__main__":
