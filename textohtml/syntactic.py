@@ -11,13 +11,23 @@
 import token
 
 
+class Syntax(list):
+    def __init__(self, fa):
+        list.__init__(self)
+        self.fa = fa
 
-class Syntax(object):
-    def __init__(self, tokens):
-        self.tokens = tokens
+
+class SyntaxPaser(object):
+    def __init__(self):
         self.pos = 0
-        self.length = len(tokens)
         self.defs = {}
+
+        self.syn = Syntax(None)
+        self.stop_name = None
+        self.tp = None
+
+    def append(self, token):
+        self.syntax(token)
 
     def get(self):
         if self.pos >= self.length:
@@ -26,7 +36,7 @@ class Syntax(object):
         self.pos += 1
         return self.tokens[pos]
 
-    def syntax(self, stop_name = None):
+    def syntax(self, tok):
         # 从当前的位置(self.pos)开始对于输入的token 流进行语法解析
         #
         # 有两种情况会退出解析
@@ -35,33 +45,28 @@ class Syntax(object):
         # 返回值:
         #  list: 这中间的每一个元素都是 token
 
-        syntax = []
-        while True:
-            tok = self.get()
-            if tok == None:
-                break
+        if tok.Type == token.TYPE_COMMENT:
+            return
 
-            if tok.Type == token.TYPE_COMMENT:
+        if tok.Type == token.TYPE_TEXPUNC:
+            if tok.name == '{':
+                self.syn = Syntax(self.syn)
+                tok.syntax = self.syntax('}')
+                tok.syntax.pop()
+
+
+        # tex 只要对于 control , texpunc 进行语法解析
+        elif tok.Type == token.TYPE_CONTROL:
+            group = self.defs.get(tok.name) # def 定义的新的控制序列
+            if group:
+                syntax.extend(group)
                 continue
+            tok = self.paser(tok)
 
-            if tok.Type == token.TYPE_TEXPUNC:
-                if tok.name == '{':
-                    tok.syntax = self.syntax('}')
-                    tok.syntax.pop()
-
-
-            # tex 只要对于 control , texpunc 进行语法解析
-            elif tok.Type == token.TYPE_CONTROL:
-                group = self.defs.get(tok.name) # def 定义的新的控制序列
-                if group:
-                    syntax.extend(group)
-                    continue
-                tok = self.paser(tok)
-
-            if tok:
-                syntax.append(tok)
-                if stop_name and tok.name == stop_name:
-                    break
+        if tok:
+            syntax.append(tok)
+            if stop_name and tok.name == stop_name:
+                break
 
         return syntax
 
@@ -99,18 +104,13 @@ class Syntax(object):
         tok.args = args # syn_list
         tok.opts = opt
 
-        if tok.name == '\starttyping':
-            tok.plain_start = self.get()
-            while True:
+        if tok.name == '\setupverbatim':
+            self.tp.verbatim = True
 
-                t = self.get()
-                if not t:
-                    raise Exception("Not Found \stoptyping after : %s" % tok.infostr())
-                if t.name == '\stoptyping':
-                    tok.plain_stop = t
-                    break
+        if tok.name = 
 
-        elif tok.name == '\startitemize':
+
+        if tok.name == '\startitemize':
             sub = self.syntax('\stopitemize')
             if not sub:
                 raise Exception("Not Found \stopitemize after : %s" % tok.infostr())

@@ -4,6 +4,8 @@
 #    email     :   fengidri@yeah.net
 #    version   :   1.0.1
 
+# 1. 按照词法分析的思路进行分析
+
 
 # 注意完成token 解析后可以由于注释的问题, 连续的换行不能连接起来
 import logging
@@ -72,6 +74,14 @@ class Token_TEXT_CN(Token):
         if char[0] == ' ':
             return RES_CONTINUE
         return RES_REDO
+
+def is_en(c):
+    if c in [' ', '\n']:
+        return False
+
+    if c in TEX_PUNC:
+        return False
+    return True
 
 
 class Token_TEXT_EN(Token):
@@ -202,12 +212,13 @@ class Token_Control(Token):
 
 class Source(object): # 对于souce 进行包装
     def __init__(self, source):
-        self.pos = 0
-        self.line  = 1
-        self.col = 0
+        self.pos    = 0
+        self.line   = 1
+        self.col    = 0
         self.source = source
-        self.pos = 0
+        self.pos    = 0
         self.length = len(source)
+
 
     def getchar(self): # 得到当前的char
         for i, c in enumerate(self.source):
@@ -225,13 +236,13 @@ class Source(object): # 对于souce 进行包装
                 else:
                     c = '\n'
 
-                if c == '\n':
-                    break
 
                 self.pos += 1
                 self.col += 1
 
                 yield (c, self.line, self.col, self.pos)
+                if c == '\n':
+                    break
 
         while self.pos < self.length:
             yield char()
@@ -240,7 +251,13 @@ class Source(object): # 对于souce 进行包装
 class TokenPaser(object):
     def __init__(self, source):
         self.src = Source(source)
+        self.syn = None
+        self.cur_token = None
+        self.sm = {
+                'control': self.handle_control,
+                }
 
+    def paser(self):
         for line in self.src.lines():
             self.handle_line(line)
 
@@ -248,56 +265,64 @@ class TokenPaser(object):
         """
             N: NewLine
             S: Skip Space
+            M: middle line
 
         """
         status = 'N'
         length = 0
 
+        self.cur_token = None
         for char in line:
             length += 1
-            if status == 'S' and char[0] == ' ':
+            c = char[0]
+
+            if status == 'E':
                 continue
 
-            self.handle_char(char)
+            elif status == 'S':
+                if c == ' ':
+                    continue
+                else:
+                    status = 'M'
 
-            if status == 'R':
-                status = self.handle_char(char)
-                assert status != 'R'
+            elif status == 'C':
+                if char[3] - self.cur_token.s == 1:
+                    if c in TEX_PUNC:
+                        self.cur_token.name
 
-        if length == 0:#\par
-            pass
+            elif status == 'W':
+
+            ############################
+
+            if c == '%':
+                status = 'E' # 一直到最后
+
+            elif c == '\\':
+                self.cur_token = Token(char)
+                status = 'C'
+
+            elif c in ['#','$','&','{','}', '^', '_', '~', '[', ']', ' ']:
+                Token(char).name = c
+                status = 'S'
+
+            elif is_en(c):
+                CurToken = Token_TEXT_EN(char)
+                status = 'W'
+
+            elif ord(c) > 255: # not english
+                Token(char)
+                status = 'S'
+            else:
+                Token(char)
+                status = 'S'
+
+        if length == 1:
+            Token(char).name = '\\par'
 
 
-    def handle_char(self, char):
-        c = char[0]
-        if CurToken:
-            res = CurToken.update(char)
-            if RES_STOP == res:
-                CurToken = None
 
-            elif RES_REDO == res:
-                CurToken = None
-                return handle(CurToken, char)
-            return CurToken
 
-        if c == '%':
-            CurToken = Token_Comment(char)
 
-        elif c == '\\':
-            CurToken = Token_Control(char)
-
-        elif c in ['#','$','&','{','}', '^', '_', '~', '[', ']', ' ']:
-            CurToken = Token_TexPunc(char)
-
-        elif Token_TEXT_EN.is_en(c):
-            CurToken = Token_TEXT_EN(char)
-
-        elif ord(c) > 255: # not english
-            CurToken = Token_TEXT_CN(char)
-
-        else:
-            CurToken = Token_TEXT_PUNC(char)
-        return CurToken
 
 
 
