@@ -1,9 +1,18 @@
+// H2 处理为章
+// H3 处理为一个 slide
+//
+// 空格翻页
+//
+//
+//
+//
+var slides = []; // 用于保存所有的 H3 对象
+
 $(document).ready(function()
 {
     set_pos();
     $('body').keypress(function(event){
         event.preventDefault();
-        console.log(event.keyCode)
         if (32 == event.keyCode)
         {
             page(1);
@@ -17,73 +26,82 @@ $(document).ready(function()
         }
     });
 })
+
+
 function page(p)
 {
     var offset = $(document).scrollTop()
-    var n_n = offset/document.body.clientHeight;
-    var n = Math.floor(n_n);
-    if (n_n - n > 0.3)
+    var win_height = $(window).height()
+    for (var i in slides)
     {
-        n = n + 1;
+        var node = slides[i];
+        var top = node.offset().top;
+        if (offset > top - win_height/5 && offset < top + win_height * 4/5)
+        {
+            i = 1 * i;
+            console.log("Goto Slide:", i+1);
+            node = slides[i + 1];
+            if (node == undefined) return;
+            $(document).scrollTop(node.offset().top);
+            return;
+        }
     }
-    n = n + p;
-    $(document).scrollTop(document.body.clientHeight * n);
-
 }
+
 function set_pos()
 {
-
     var nodes =  $('body > *');
-    var slides = [];
-    for (var i in nodes)
-    {
-        var nodeName = nodes[i].nodeName;
-        if ('H3' != nodeName && 'H4' != nodeName)
-            continue;
-        slides.push(nodes[i])
-    }
-    var index;
-    for (index in slides)
-    {
-        index = index * 1;
-        handle(index, slides[index], slides[index + 1]);
-    }
+    var heights = [];
+    var last_top = undefined;
+    var chapter_name = '';
+    $('body > *').each(function()
+        {
+            node = $(this);
+            var nodeName = this.nodeName;
+            if ('H2' == nodeName)
+            {
+                chapter_name = node.text();
+                node.hide();
+                return;
+            }
+            if ('H3' == nodeName)
+            {
+                if (last_top != undefined)
+                {
+                    heights.push(node.offset().top - last_top);
+                }
+                last_top = node.offset().top;
+                node.text(chapter_name + " > " + node.text());
+                slides.push(node)
+                console.log("Get Slide: ", node.text());
+            }
+        }
+    );
 
-    var n = document.body.scrollHeight - document.body.clientHeight * (1*index + 1);
-    if (n < 0)
-    {
-        $('body').append(get_space(-1 *n));
-    }
+    heights.push(document.body.scrollHeight - last_top);
 
+    makeslide(slides, heights);
 }
 
-function handle(index, target, next)
+function makeslide(slides, heights)
 {
-    var target = $(target);
-    var next_top;
-    if (undefined == next)
+    var heade_pre = 0;
+    var total_height = $(window).height();//document.body.clientHeight;
+    for (var i in slides)
     {
-        next_top = document.body.scrollHeight;
+        var node = slides[i];
+        var height = heights[i];
+        var space = total_height - height;
+        console.log("makeslide :", node.text());
+        console.log("makeslide space:", space);
+        node.before(make_space(heade_pre));
+        node.after(make_space(space * 0.3));
+        heade_pre = space * 0.7;
     }
-    else
-    {
-        next_top = $(next).offset().top;
-    }
-    var height = document.body.clientHeight - next_top + target.offset().top;
-
-    var target_top = document.body.clientHeight * index + height * 0.4;
-
-    set_top_pos(target, target_top);
+    $('body').append(make_space(heade_pre));
 }
 
-function set_top_pos(obj, target_top)
-{
-    var obj_top = obj.offset().top
-    var space = get_space(target_top - obj_top);
-    obj.before(space);
-}
-
-function get_space(h)
+function make_space(h)
 {
     var space = $('<div>')
     space.css('margin', 0);
