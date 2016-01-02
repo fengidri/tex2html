@@ -1,7 +1,14 @@
 body{
     width: 800px;
     margin: auto;
-    font-size: 17pt;
+    font-size: 15pt;
+    font-family: Helvetica, arial, sans-serif;
+    line-height: 1.6;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: white;
+    padding: 30px;
+    letter-spacing:2px;
 }
 
 body > p{

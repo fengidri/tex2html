@@ -6,8 +6,12 @@
 //
 //
 //
+//
+//
+''
 var slides = []; // 用于保存所有的 H3 对象
 var Position;
+var HEIGHT = document.body.clientHeight;
 
 $(document).ready(function()
 {
@@ -44,12 +48,11 @@ $(document).ready(function()
 function page(p)
 {
     var offset = $(document).scrollTop()
-    var win_height = $(window).height()
     for (var i in slides)
     {
         var node = slides[i];
         var top = node.offset().top;
-        if (offset > top - win_height/5 && offset < top + win_height * 4/5)
+        if (offset > top - HEIGHT/5 && offset < top + HEIGHT * 4/5)
         {
             gotoslide(i * 1 + 1);
             return;
@@ -110,15 +113,13 @@ function set_pos()
 function makeslide(slides, heights)
 {
     var heade_pre = 0;
-    var total_height = $(window).height();//document.body.clientHeight;
     for (var i in slides)
     {
         var node = slides[i];
         var height = heights[i];
-        var space = total_height - height;
+        var space = HEIGHT - height;
 
-        console.log("makeslide :", node.text());
-        console.log("makeslide space:", space);
+        console.log("height:", height, " space:", space, " makeslide :", node.text());
 
         node.before(make_space(heade_pre));
         node.after(make_space(space * 0.3));
