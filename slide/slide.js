@@ -3,19 +3,34 @@
 //
 // 空格翻页
 //
-//
-//
-//
-//
-//
-''
-var slides = []; // 用于保存所有的 H3 对象
+
+var slides; // 用于保存所有的 H3 对象
 var Position;
 var HEIGHT = document.body.clientHeight;
 
-$(document).ready(function()
+// 判断各种浏览器，找到正确的方法
+function launchFullScreen(element) {
+    if(element.requestFullscreen) {
+        element.requestFullscreen();
+    } else if(element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+    } else if(element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen();
+    } else if(element.msRequestFullscreen) {
+        element.msRequestFullscreen();
+    }
+}
+
+function FullEvent(fun)
 {
-    set_pos();
+    document.addEventListener("fullscreenchange",       fun, false);
+    document.addEventListener("mozfullscreenchange",    fun, false);
+    document.addEventListener("webkitfullscreenchange", fun, false);
+    document.addEventListener("msfullscreenchange",     fun, false);
+}
+
+function AddTools()
+{
     var pos = $('<div>')
     pos.css('margin', 0);
     pos.css('padding', 0);
@@ -26,6 +41,32 @@ $(document).ready(function()
     pos.css('right', 12);
     Position = pos;
     $('body').append(pos);
+
+    var full = $('<div>').text("Full");
+    full.css('margin', 0);
+    full.css('padding', 0);
+    full.css('border', '1px');
+    full.css('display', 'inline-block');
+    full.css('position', 'fixed');
+    full.css('bottom', 42);
+    full.css('right', 12);
+    full.css('cursor', 'pointer');
+    $('body').append(full);
+
+    full.click(function(){
+        // 启动全屏!
+        launchFullScreen(document.documentElement); // 整个网页
+        full.hide();
+        //launchFullScreen(document.getElementById("videoElement")); // 某个页面元素
+    });
+
+}
+
+$(document).ready(function()
+{
+    Slides();
+    AddTools();
+
     gotoslide(0);
 
     $('body').keypress(function(event){
@@ -42,6 +83,18 @@ $(document).ready(function()
             page(-1);
         }
     });
+
+    FullEvent(function () {
+        if (HEIGHT == document.body.clientHeight)
+        {
+            HEIGHT =  window.screen.availHeight;
+        }
+        else{
+            HEIGHT = document.body.clientHeight;
+        }
+        Slides();
+    });
+
 })
 
 
@@ -71,12 +124,16 @@ function gotoslide(n)
     Position.text((n + 1) + "/" + slides.length);
 }
 
-function set_pos()
+function Slides()
 {
     var nodes =  $('body > *');
     var heights = [];
     var last_top = undefined;
     var chapter_name = '';
+    slides = [];
+
+    //HEIGHT = document.body.clientHeight;
+    console.log("HEIGHT: ", HEIGHT);
     $('body > *').each(function()
         {
             node = $(this);
@@ -94,7 +151,9 @@ function set_pos()
                     heights.push(node.offset().top - last_top);
                 }
                 last_top = node.offset().top;
-                node.text(chapter_name + " > " + node.text());
+
+                if (node[0]._text == undefined) node[0]._text = node.text();
+                node.text(chapter_name + " > " + node[0]._text);
                 slides.push(node)
                 console.log("Get Slide: ", node.text());
             }
@@ -104,9 +163,6 @@ function set_pos()
     heights.push(document.body.scrollHeight - last_top);
 
     makeslide(slides, heights);
-    //console.log(slides["0"].offset().top);
-    //$(document).scrollTop(slides["0"].offset().top);
-    //$(document).scrollTop(0);
 
 }
 
@@ -130,7 +186,7 @@ function makeslide(slides, heights)
 
 function make_space(h)
 {
-    var space = $('<div>')
+    var space = $('<div id=_space >')
     space.css('margin', 0);
     space.css('padding', 0);
     space.css('border', 'None');
