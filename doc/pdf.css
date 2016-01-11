@@ -1,0 +1,132 @@
+@page {
+    margin: 3cm    /* Top margin on first page 10cm */
+}
+div.newpage{
+    page-break-after: always;
+}
+
+
+/* print only */
+@media print {
+    /* defaults  for screen */
+    #print-head,
+    #print-foot {
+        display: none;
+    }
+
+
+    h3 {
+        page-break-before: always;
+        padding-top: 2em;
+    }
+
+    h3:first-child {
+        page-break-before: avoid;
+        counter-reset: page;
+    }
+
+    #print-head {
+        display: block;
+        position: fixed;
+        top: 0pt;
+        left:0pt;
+        right: 0pt;
+
+        font-size: 200%;
+        text-align: center;
+    }
+
+    #print-foot {
+        display: block;
+        position: fixed;
+        bottom: 0pt;
+        right: 0pt;
+
+        font-size: 200%;
+    }
+
+    #print-foot:after {
+        content: counter(page);
+        counter-increment: page;
+    }
+
+} /* end print only */
+
+body{
+    width:210mm;
+    font-size:13pt;
+    letter-spacing: 1px;
+    margin: auto;
+}
+
+h2
+{
+    font-size:40pt;
+    color:black;
+    margin:1em;
+    margin-top:3em;
+    text-align: center;
+}
+
+
+h3
+{
+    font-size:20pt;
+    color:black;
+    counter-increment: counter_section;
+    counter-reset:counter_subsection;
+    margin-top:3em;
+    border-bottom: solid 4px  green;
+    page-break-after: avoid;
+}
+h3:first-of-type
+{
+    margin-top:0em;
+}
+h3:before
+{
+    content:counter(counter_section) '. ';
+}
+h4
+{
+    margin-top:3em;
+    font-size:15pt;
+    color:black;
+    counter-reset:counter_subsubsection;
+    counter-increment: counter_subsection;
+}
+h4:first-of-type{
+    margin-top:0em;
+}
+h4:before
+{
+    content:counter(counter_section)'.'counter(counter_subsection) '. ';
+}
+h5
+{
+    font-size:12pt;
+    counter-increment: counter_subsubsection;
+    margin-top:3em;
+}
+h5:first-of-type{
+    margin-top:0em;
+}
+h5:before
+{
+    content:counter(counter_section)'.'
+    counter(counter_subsection)'.'
+    counter(counter_subsubsection)'. ';
+}
+p{
+    text-indent:2em;
+    margin-top:1em;
+    margin:1em;
+    line-height:200%;
+}
+
+pre{
+    background: grey;
+    padding: 6pt;
+    padding-left: 2em;
+
+    }
