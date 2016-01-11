@@ -181,7 +181,10 @@ class Section( node_control ):
 
     def md(self):
         name = self.name
-        level = name.count('sub') + 3
+        if name == 'chapter':
+            level = 2
+        else:
+            level = name.count('sub') + 3
 
         if not self.Params:
             raise LostParamsEx(self.word)
@@ -191,7 +194,10 @@ class Section( node_control ):
 
     def html( self ):
         name = self.name
-        level = name.count('sub') + 3
+        if name == '\chapter':
+            level = 2
+        else:
+            level = name.count('sub') + 3
 
         if not self.Params:
             raise LostParamsEx(self.word)
@@ -314,7 +320,7 @@ class Newline(node_control):
         return "</p>\n\n<p>"
 
     def html(self):
-        return "\n\n"
+        return "\n<br \>\n"
 
 class DefHandle(node_control):
     MAPS = {}
@@ -352,14 +358,20 @@ class backslash(node_control):
     def html(self):
         return '\\'
 
+class Newpage(node_control):
+
+    def html(self):
+        return '<div class=newpage> </div>'
 
 
 NODE_MAP={
+        '\chapter'       : Section,
         '\section'       : Section,
         '\subsection'    : Section,
         '\subsubsection' : Section,
         '\startitemize'  : Itemize,
         '\item'          : Item,
+        '\\newpage'      : Newpage,
         '\goto'          : Goto,
         '\img'           : Img,
         '\par'           : Newline,
