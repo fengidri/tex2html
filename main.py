@@ -82,7 +82,7 @@ def handle():
     else:
         res = textohtml.html(path = Config.input)
 
-    f.write(res)
+    f.write(res.encode('utf8'))
     f.close()
 
 if __name__ == "__main__":
