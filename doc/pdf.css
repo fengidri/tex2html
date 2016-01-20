@@ -49,6 +49,12 @@ div.newpage{
         content: counter(page);
         counter-increment: page;
     }
+    pre{
+        background: grey;
+        padding: 6pt;
+        padding-left: 2em;
+
+    }
 
 } /* end print only */
 
