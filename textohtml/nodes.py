@@ -315,6 +315,17 @@ class Bold(node_control):
             return "`%s`" % self.Params[0].md()
         return ""
 
+class Center(node_control):
+    def html(self):
+        if len(self.Params) > 0:
+            return "<center>%s</center>" % self.Params[0].html()
+        return ""
+
+    def md(self):
+        if len(self.Params) > 0:
+            return "`%s`" % self.Params[0].md()
+        return ""
+
 class Newline(node_control):
     def html(self):
         return "</p>\n\n<p>"
@@ -372,6 +383,7 @@ NODE_MAP={
         '\startitemize'  : Itemize,
         '\item'          : Item,
         '\\newpage'      : Newpage,
+        '\\center'      :  Center,
         '\goto'          : Goto,
         '\img'           : Img,
         '\par'           : Newline,

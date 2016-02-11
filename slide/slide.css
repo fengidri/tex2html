@@ -1,5 +1,4 @@
 body{
-    width: 800px;
     margin: auto;
     font-size: 15pt;
     font-family: Helvetica, arial, sans-serif;
@@ -9,11 +8,35 @@ body{
     background-color: white;
     padding: 30px;
     letter-spacing:2px;
+    padding: 0;
 }
 
-body > p{
+h3, h4{
+    margin: 10px;
+}
+
+pre{
+    text-indent: 0em;
+    width: 90%;
+    margin: auto;
+    font-size: 12pt;
+    border: 1px solid green;
+    padding: 4px;
+}
+#slide_orgin{
+    display: none;
+}
+
+body > div{
+    /*border: 1px solid green; */
+    overflow-y: hidden;
+    padding: 0 1em 0 1em;
+    margin: auto;
+}
+
+p{
     text-indent: 2em;
 }
-h3, h4{
-    padding: 1em;
+img{
+    max-width: 95%;
 }
