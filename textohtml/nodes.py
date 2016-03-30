@@ -215,7 +215,7 @@ class Itemize( node_control ):
         self.tree = node_tree(_ws.slice(0, -1))
 
     def md(self):
-        return "\n  %s" % self.tree.html()
+        return "\n%s\n" % self.tree.md()
 
     def html(self ):
         return "\n    <ul>\n%s\n    </ul>" % self.tree.html()
@@ -225,7 +225,7 @@ class Item( node_control ):
     def md(self):
         if self.Params:
             return '\n* %s' % self.Params[0].md()
-        return '\n  '
+        return '* '
 
     def html( self ):
         if self.Params:
