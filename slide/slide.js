@@ -193,6 +193,8 @@ function slide_resize(obj)
 
 function slide_all_resize()
 {
+    console.log("resize")
+    HEIGHT = document.body.clientHeight;
     $('div.slide').each(function(){
         var obj = $(this);
         var sub = obj.find('div');
@@ -240,18 +242,19 @@ function slide_show()
             page(-1);
         }
     });
+    $(window).resize(slide_all_resize);
 
-    FullEvent(function () {
-        if (HEIGHT == document.body.clientHeight)
-        {
-            //HEIGHT =  window.screen.availHeight;
-            HEIGHT =  window.screen.height;
-        }
-        else{
-            HEIGHT = document.body.clientHeight;
-        }
-        slide_all_resize();
-    });
+    //FullEvent(function () {
+    //    if (HEIGHT == document.body.clientHeight)
+    //    {
+    //        //HEIGHT =  window.screen.availHeight;
+    //        HEIGHT =  window.screen.height;
+    //    }
+    //    else{
+    //        HEIGHT = document.body.clientHeight;
+    //    }
+    //    slide_all_resize();
+    //});
 
 }
 
