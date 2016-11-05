@@ -1,6 +1,6 @@
 body{
     margin: auto;
-    font-size: 15pt;
+    font-size: 18pt;
     font-family: Helvetica, arial, sans-serif;
     line-height: 1.6;
     padding-top: 10px;
@@ -42,12 +42,19 @@ img{
 }
 
 
+.slide{
+    position: relative;
+    page-break-after: always;
+    border: 1px solid green;
+}
 
 @page {
-    margin: 3cm;    /* Top margin on first page 10cm */
+    margin: 0 0 0 0;    /* Top margin on first page 10cm */
     /*lsize: A3; */
-    size: 13.6in 13.6in;
+    size: 10in 10in;
+
 }
+
 div.newpage{
     page-break-after: always;
 }
@@ -56,20 +63,36 @@ div.newpage{
 /* print only */
 @media print {
     /* defaults  for screen */
-    .printEl {
+    /*
+   .printEl {
         width: 15in;
         height: 15in;
     }
+    */
     #print-head,
     #print-foot {
         display: none;
     }
 
-
-    h3 {
-        page-break-before: always;
-        padding-top: 2em;
+    body, html{
+        width: 10in;
+        height: 10in;
+        padding: 0;
+        margin: 0;
     }
+
+
+
+	
+
+	
+
+	@page :right {
+
+	  margin-left: 0cm;
+
+	}
+
 
     h3:first-child {
         page-break-before: avoid;
