@@ -51,7 +51,7 @@ img{
 @page {
     margin: 0 0 0 0;    /* Top margin on first page 10cm */
     /*lsize: A3; */
-    size: 10in 10in;
+    size: 5.3in 5.3in;
 
 }
 
@@ -75,8 +75,8 @@ div.newpage{
     }
 
     body, html{
-        width: 10in;
-        height: 10in;
+        width: 5in;
+        height: 5in;
         padding: 0;
         margin: 0;
     }

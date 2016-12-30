@@ -144,6 +144,7 @@ function Slides(objs)
 
     var slice_number = 0;
     var content, box;
+    var bottoms = [];
 
     objs.each(function()
         {
@@ -169,6 +170,7 @@ function Slides(objs)
                 content = box[2];
                 box[0].attr('class', 'slide')
                 content.attr('class', "content")
+                bottoms.push(box[3])
 
                 SLIDES.push(box[0][0]);
                 return;
@@ -183,6 +185,12 @@ function Slides(objs)
     );
 
     adjust_content();
+
+    var i;
+    for (i in bottoms)
+    {
+        bottoms[i].text(bottoms[i].text() + '/' + slice_number)
+    }
 
     //scale($("div.slide_content"));
     prettyPrint();
@@ -232,7 +240,7 @@ function adjust_content()
             return;
         }
 
-        obj.css("transform", "translateY(" +  (H - obj.height())* 2/5 + "px)");
+        obj.css("transform", "translateY(" +  (H - obj.height())* 2/9 + "px)");
     });
 }
 
