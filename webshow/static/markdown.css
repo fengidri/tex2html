@@ -26,10 +26,11 @@ img{
 
 #index{
     border: 1px solid;
-    position: fixed;
     padding: 1em;
-
+    display: inline-block;
+    float: left;
 }
+
 #index div{
     cursor: pointer;
 }

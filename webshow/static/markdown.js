@@ -1,16 +1,26 @@
 var LAST_MD = "";
+var LAST_MODIFIED = "";
+var ETAG = "";
 
 function strcmp(s1, s2)
 {
-    for (var i = 0; i < s1.length; ++i)
+
+    var i = 0;
+    var eline = 0;
+    while(i < s1.length)
     {
-        var c2 = s2.substr(i, 1);
-        if (c2 == "") return i;
+        eline = s1.indexOf('\n', i);
+        if (eline < 0)
+            return s1.length;
 
-        var c1 = s1.substr(i, 1);
-        if (c1 != c2)
-            return i;
+        if (i >= s1.length) return eline;
 
+        var c2 = s2.substr(i, eline - i);
+        var c1 = s1.substr(i, eline - i);
+
+        if (c1 != c2) return eline;
+
+        i = eline + 1;
     }
     return -1;
 }
@@ -31,6 +41,7 @@ function index_init(index, list, toggle)
     index.append($('<h3>').text('目录'));
     h2=h3=h4=h5=h6=0;
     nu='';
+    id_div = '';
     headers.each(function(){
         header=$(this);
         switch(header[0].nodeName){
@@ -83,21 +94,28 @@ function index_init(index, list, toggle)
 
 function loadmd()
 {
-    $.get("../workdoc/work-summary-2016.md", function(data, status){
-        //if (status != 200)
-        //{
-        //    alert("recv status " + status);
-        //    return;
-        //}
+    $.get("../workdoc/work-summary-2016.md", function(data, status, xhr){
+        var lm = xhr.getResponseHeader("Last-Modified");
+        if (lm == LAST_MODIFIED)
+            return;
+        LAST_MODIFIED = lm;
+
+        var etag = xhr.getResponseHeader("ETAG");
+        if (etag == ETAG)
+            return;
+        ETAG = etag;
+
         var pos = strcmp(data, LAST_MD);
         if (-1 == pos) return;
         LAST_MD = data;
 
         data = data.substr(0, pos) + "<span id=_m></span>" + data.substr(pos);
 
+        $("#content").html("");
         $("#content").html(marked(data));
 
-        $("body").animate({scrollTop:$("#_m").offset().top - 100},1000);
+        console.log($("#_m").offset().top);
+        $("html,body").animate({scrollTop:$("#_m").offset().top}, 400);
 
         index_init($("#index"), $("#content"));
     })
