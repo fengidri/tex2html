@@ -92,18 +92,24 @@ function index_init(index, list, toggle)
 }
 
 
+function check_modified_by_header(xhr)
+{
+    var lm = xhr.getResponseHeader("Last-Modified");
+    var etag = xhr.getResponseHeader("ETAG");
+
+    if (lm == LAST_MODIFIED && etag == ETAG)
+        return false;
+
+    LAST_MODIFIED = lm;
+    ETAG = etag;
+    return true;
+}
+
+
 function loadmd()
 {
-    $.get("../workdoc/work-summary-2016.md", function(data, status, xhr){
-        var lm = xhr.getResponseHeader("Last-Modified");
-        if (lm == LAST_MODIFIED)
-            return;
-        LAST_MODIFIED = lm;
-
-        var etag = xhr.getResponseHeader("ETAG");
-        if (etag == ETAG)
-            return;
-        ETAG = etag;
+    $.get(filename, function(data, status, xhr){
+        if (!check_modified_by_header(xhr)) return;
 
         var pos = strcmp(data, LAST_MD);
         if (-1 == pos) return;
@@ -115,11 +121,37 @@ function loadmd()
         $("#content").html(marked(data));
 
         console.log($("#_m").offset().top);
-        $("html,body").animate({scrollTop:$("#_m").offset().top}, 400);
+        $("html,body").animate({scrollTop:$("#_m").offset().top - 300}, 400);
 
         index_init($("#index"), $("#content"));
     })
 }
 
-loadmd();
-setInterval(loadmd, 500);
+
+function getUrlParams() {
+    var result = {};
+    var params = (window.location.search.split('?')[1] || '').split('&');
+    for(var param in params) {
+        if (params.hasOwnProperty(param)) {
+            paramParts = params[param].split('=');
+            result[paramParts[0]] = decodeURIComponent(paramParts[1] || "");
+        }
+    }
+    return result;
+}
+
+function slide_init()
+{
+    $('pre').addClass("prettyprint");
+    slide_show();
+}
+
+var filename = getUrlParams()['f'];
+if (!filename)
+{
+    $('body').html("Please select file in url by 'f'");
+}
+else{
+    loadmd();
+    setInterval(loadmd, 500);
+}
