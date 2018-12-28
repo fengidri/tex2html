@@ -121,7 +121,7 @@ function loadmd()
         $("#content").html(marked(data));
 
         console.log($("#_m").offset().top);
-        $("html,body").animate({scrollTop:$("#_m").offset().top - 300}, 400);
+        $("#wrap").animate({scrollTop:$("#_m").offset().top - 300}, 400);
 
         index_init($("#index"), $("#content"));
     })
@@ -146,12 +146,43 @@ function slide_init()
     slide_show();
 }
 
+function listdir(pt, path)
+{
+    var ul = $("<ul>");
+
+    pt.append(ul);
+
+    $.ajax({
+        url: path,
+        async: false,
+        success: function(data)
+        {
+            var file;
+            for (i in data)
+            {
+                file = data[i];
+                if (file.type == 'directory')
+                {
+                    ul.append($('<li>').text(file.name))
+                    listdir(ul, path + file.name + '/')
+                }
+                else{
+                    var a = $('<a>').attr("href", "/markdown.html?f=" + path + file.name).text(file.name)
+                    ul.append($('<li>').append(a))
+                }
+            }
+        },
+    })
+}
+
+listdir($('#files'), "/store/")
+
 var filename = getUrlParams()['f'];
 if (!filename)
 {
-    $('body').html("Please select file in url by 'f'");
 }
 else{
+    $('#title').text(filename)
     loadmd();
     setInterval(loadmd, 500);
 }
