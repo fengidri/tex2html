@@ -34,7 +34,14 @@
 }
 */
 
-code{
+code {
+    background-color:#cc1458;
+    color: #ccc;
+    padding: 2pt;
+    border-radius: 2px;
+}
+
+pre code{
     display: block;
     font-weight: bold;
     background-color:#d6d5d5;
@@ -42,7 +49,6 @@ code{
     color: #ccc;
     padding: 1em;
     border-radius: 5px;
-    min-height: 3em;
 }
 
 p{
